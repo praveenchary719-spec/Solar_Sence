@@ -1,0 +1,413 @@
+{% extends "base.html" %}
+
+{% block title %}PCA, t-SNE, Anomaly Detection & DBSCAN (M4+) — Solar Sense{% endblock %}
+
+{% block content %}
+<div class="page m4-page adv-page">
+    <!-- Hero Header -->
+    <div class="m4-hero-header">
+        <div class="hero-badge">🌌 MODULE 4+ — ADVANCED MANIFOLD &amp; UNSUPERVISED PIPELINE</div>
+        <h1 class="m4-main-title">Dimensionality Reduction, Anomaly Detection &amp; Density Clustering</h1>
+        <p class="m4-subtitle">
+            Unpack high-dimensional solar sensor dynamics using <strong>Principal Component Analysis (PCA)</strong> and <strong>t-SNE</strong> manifold projections, isolate inverter deviations with <strong>Isolation Forest</strong>, and partition operating densities with <strong>DBSCAN</strong>.
+        </p>
+    </div>
+
+    <!-- Quick Telemetry Stats Strip -->
+    <section class="m4-section">
+        <div class="section-header-flex">
+            <h2>⚡ Advanced Unsupervised Telemetry Summary</h2>
+            <span class="table-meta-badge">Pipeline Telemetry</span>
+        </div>
+        <div class="kpi-grid">
+            <div class="card kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-label">PCA PC1+PC2 Variance</span>
+                    <span class="kpi-icon">📉</span>
+                </div>
+                <div class="kpi-value text-cyan">66.02%</div>
+                <div class="kpi-meta">Top 2 components capture 2/3 total variance</div>
+            </div>
+            <div class="card kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-label">Isolation Forest Anomalies</span>
+                    <span class="kpi-icon">🛡️</span>
+                </div>
+                <div class="kpi-value text-amber">
+                    {{ "{:,.0f}".format(adv_data.anomaly.summary.get('Anomalies', 30621)) }}
+                </div>
+                <div class="kpi-meta">
+                    {{ "{:.2f}".format(adv_data.anomaly.summary.get('Anomaly_Percentage', 44.52)) }}% flagged as anomalous / night-idle
+                </div>
+            </div>
+            <div class="card kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-label">t-SNE Manifold Points</span>
+                    <span class="kpi-icon">🔮</span>
+                </div>
+                <div class="kpi-value text-indigo">5,000</div>
+                <div class="kpi-meta">Subsampled with PCA initialization &amp; perplexity 30</div>
+            </div>
+            <div class="card kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-label">DBSCAN Core / Noise</span>
+                    <span class="kpi-icon">🌌</span>
+                </div>
+                <div class="kpi-value text-emerald">
+                    {{ adv_data.dbscan.preprocessed.noise }} <span style="font-size: 0.6em; opacity: 0.7;">noise pts</span>
+                </div>
+                <div class="kpi-meta">ε=0.8, min_samples=10 density threshold</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- SECTION 1: PCA Dimensionality Reduction        -->
+    <!-- ============================================== -->
+    <section class="m4-section">
+        <div class="section-header-flex">
+            <h2>📉 Principal Component Analysis (PCA)</h2>
+            <span class="table-meta-badge">Linear Subspace Projection</span>
+        </div>
+
+        <div class="m4-chart-pair card">
+            <h3 class="m4-chart-group-title">Scree Variance Distribution &amp; 2D Subspace Embeddings</h3>
+            <p class="m4-chart-desc">
+                PCA orthogonalizes the multi-sensor correlation matrix, decomposing irradiation, module/ambient temperatures, and power generation into uncorrelated eigenvectors. The scree plot indicates that 4 components preserve &gt;89.9% of information.
+            </p>
+            <div class="m4-chart-row">
+                {% if adv_data.pca.image_scree %}
+                <div class="m4-chart-card">
+                    <div class="m4-chart-thumb-wrap m4-lightbox-trigger" data-url="{{ adv_data.pca.image_scree }}" data-title="PCA — Explained Variance Scree Plot">
+                        <img src="{{ adv_data.pca.image_scree }}" alt="PCA Explained Variance Scree" loading="lazy" class="m4-chart-img">
+                        <div class="m4-chart-overlay"><span>🔍 Zoom &amp; Pan</span></div>
+                    </div>
+                    <div class="m4-chart-footer">
+                        <span class="m4-chart-label">Explained Variance Scree Plot</span>
+                        <a href="{{ adv_data.pca.image_scree }}" target="_blank" rel="noopener" class="m4-direct-link" title="Open full resolution">↗ Full Res</a>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if adv_data.pca.image_2d %}
+                <div class="m4-chart-card">
+                    <div class="m4-chart-thumb-wrap m4-lightbox-trigger" data-url="{{ adv_data.pca.image_2d }}" data-title="PCA — 2D Component Projection">
+                        <img src="{{ adv_data.pca.image_2d }}" alt="PCA 2D Component Projection" loading="lazy" class="m4-chart-img">
+                        <div class="m4-chart-overlay"><span>🔍 Zoom &amp; Pan</span></div>
+                    </div>
+                    <div class="m4-chart-footer">
+                        <span class="m4-chart-label">2D Principal Component Projection</span>
+                        <a href="{{ adv_data.pca.image_2d }}" target="_blank" rel="noopener" class="m4-direct-link" title="Open full resolution">↗ Full Res</a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- PCA Variance Breakdown Table -->
+        {% if adv_data.pca.variance %}
+        <div class="card mt-4" style="overflow-x: auto;">
+            <div class="section-header-flex" style="padding: 1.25rem 1.25rem 0.5rem;">
+                <h3 style="font-size: 1.1rem; margin: 0;">Component Variance Breakdown</h3>
+                <span class="table-meta-badge">{{ adv_data.pca.variance|length }} Components</span>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>Individual Variance Ratio</th>
+                        <th>Individual (%)</th>
+                        <th>Cumulative Variance Ratio</th>
+                        <th>Cumulative (%)</th>
+                        <th>Variance Retention</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for v in adv_data.pca.variance %}
+                    <tr>
+                        <td><strong>PC{{ v.component }}</strong></td>
+                        <td>{{ v.ratio }}</td>
+                        <td><span class="badge badge-info">{{ v.ratio_pct }}%</span></td>
+                        <td>{{ v.cum_ratio }}</td>
+                        <td><strong>{{ v.cum_pct }}%</strong></td>
+                        <td style="min-width: 140px;">
+                            <div class="m4-acc-bar-track" style="margin: 0; height: 8px;">
+                                <div class="m4-acc-bar-fill" style="width: {{ v.cum_pct }}%;"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- ============================================== -->
+    <!-- SECTION 2: t-SNE Manifold Embeddings           -->
+    <!-- ============================================== -->
+    <section class="m4-section">
+        <div class="section-header-flex">
+            <h2>🔮 t-SNE Non-Linear Manifold Embedding</h2>
+            <span class="table-meta-badge">Non-Linear Clustering</span>
+        </div>
+
+        <div class="grid-2-col">
+            {% if adv_data.tsne.image_url %}
+            <div class="card m4-chart-card">
+                <div class="m4-chart-thumb-wrap m4-lightbox-trigger" data-url="{{ adv_data.tsne.image_url }}" data-title="t-SNE 2D Manifold Projection">
+                    <img src="{{ adv_data.tsne.image_url }}" alt="t-SNE Manifold Projection" loading="lazy" class="m4-chart-img">
+                    <div class="m4-chart-overlay"><span>🔍 Zoom &amp; Pan</span></div>
+                </div>
+                <div class="m4-chart-footer">
+                    <span class="m4-chart-label">t-SNE 2D Projection (Perplexity=30)</span>
+                    <a href="{{ adv_data.tsne.image_url }}" target="_blank" rel="noopener" class="m4-direct-link" title="Open full resolution">↗ Full Res</a>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card">
+                <h3 style="font-size: 1.15rem; margin-bottom: 0.75rem;">Manifold Topology Highlights</h3>
+                <p class="muted" style="line-height: 1.6; margin-bottom: 1rem;">
+                    t-Distributed Stochastic Neighbor Embedding (t-SNE) maps complex non-linear relationships among solar sensors by minimizing Kullback-Leibler divergence between Gaussian probability distributions in high and low dimensions.
+                </p>
+                <div class="m4-metrics-strip" style="flex-direction: column; gap: 0.75rem;">
+                    <div class="m4-metric-pill" style="justify-content: space-between;">
+                        <span class="m4-pill-label">Sample Subspace</span>
+                        <span class="m4-pill-value">5,000 Normalized Telemetry Points</span>
+                    </div>
+                    <div class="m4-metric-pill" style="justify-content: space-between;">
+                        <span class="m4-pill-label">Initialization Mode</span>
+                        <span class="m4-pill-value">PCA-seeded (deterministic reproducibility)</span>
+                    </div>
+                    <div class="m4-metric-pill" style="justify-content: space-between;">
+                        <span class="m4-pill-label">Learning Rate</span>
+                        <span class="m4-pill-value">Adaptive Auto</span>
+                    </div>
+                    <div class="m4-metric-pill" style="justify-content: space-between;">
+                        <span class="m4-pill-label">Perplexity Parameter</span>
+                        <span class="m4-pill-value">30 (smooth neighborhood radius)</span>
+                    </div>
+                </div>
+
+                {% if adv_data.tsne.samples %}
+                <h4 style="margin-top: 1.25rem; margin-bottom: 0.5rem; font-size: 0.95rem;">Embedded Coordinates Preview</h4>
+                <div style="overflow-x: auto; max-height: 200px;">
+                    <table class="data-table" style="font-size: 0.85rem;">
+                        <thead>
+                            <tr>
+                                {% for h in adv_data.tsne.sample_headers %}
+                                <th>{{ h }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in adv_data.tsne.samples[:5] %}
+                            <tr>
+                                {% for h in adv_data.tsne.sample_headers %}
+                                <td>{{ "{:.4f}".format(row[h]) if row[h] is number else row[h] }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- SECTION 3: Isolation Forest Anomaly Detection  -->
+    <!-- ============================================== -->
+    <section class="m4-section">
+        <div class="section-header-flex">
+            <h2>🛡️ Isolation Forest Telemetry Anomaly Detection</h2>
+            <span class="table-meta-badge">Tree-Based Isolation</span>
+        </div>
+
+        <div class="grid-2-col">
+            {% if adv_data.anomaly.image_url %}
+            <div class="card m4-chart-card">
+                <div class="m4-chart-thumb-wrap m4-lightbox-trigger" data-url="{{ adv_data.anomaly.image_url }}" data-title="Isolation Forest Anomaly Score Distribution">
+                    <img src="{{ adv_data.anomaly.image_url }}" alt="Isolation Forest Anomaly Score Distribution" loading="lazy" class="m4-chart-img">
+                    <div class="m4-chart-overlay"><span>🔍 Zoom &amp; Pan</span></div>
+                </div>
+                <div class="m4-chart-footer">
+                    <span class="m4-chart-label">Anomaly Score Distribution &amp; Threshold</span>
+                    <a href="{{ adv_data.anomaly.image_url }}" target="_blank" rel="noopener" class="m4-direct-link" title="Open full resolution">↗ Full Res</a>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card">
+                <h3 style="font-size: 1.15rem; margin-bottom: 0.75rem;">Anomaly Scoring &amp; Inverter Health</h3>
+                <p class="muted" style="line-height: 1.6; margin-bottom: 1rem;">
+                    Isolation Forest partitions feature space recursively using random orthogonal cuts. Outliers require significantly fewer splits to isolate than normal solar operating conditions.
+                </p>
+                <div class="m4-overview-cards" style="grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div class="card p-3" style="background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.25);">
+                        <span class="muted" style="font-size: 0.8rem;">NORMAL OPERATION</span>
+                        <div style="font-size: 1.4rem; font-weight: 700; color: #10b981; margin-top: 0.25rem;">
+                            {{ "{:,.0f}".format(adv_data.anomaly.summary.get('Rows', 68774) - adv_data.anomaly.summary.get('Anomalies', 30621)) }}
+                        </div>
+                        <span class="muted" style="font-size: 0.75rem;">Active steady-state generation</span>
+                    </div>
+                    <div class="card p-3" style="background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.25);">
+                        <span class="muted" style="font-size: 0.8rem;">ANOMALY / CURTAILED</span>
+                        <div style="font-size: 1.4rem; font-weight: 700; color: #ef4444; margin-top: 0.25rem;">
+                            {{ "{:,.0f}".format(adv_data.anomaly.summary.get('Anomalies', 30621)) }}
+                        </div>
+                        <span class="muted" style="font-size: 0.75rem;">Night periods &amp; sensor deviations</span>
+                    </div>
+                </div>
+
+                {% if adv_data.anomaly.samples %}
+                <h4 style="margin-top: 1.25rem; margin-bottom: 0.5rem; font-size: 0.95rem;">Sample Records with Anomaly Scores</h4>
+                <div style="overflow-x: auto; max-height: 220px;">
+                    <table class="data-table" style="font-size: 0.8rem;">
+                        <thead>
+                            <tr>
+                                {% for h in adv_data.anomaly.sample_headers %}
+                                <th>{{ h }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in adv_data.anomaly.samples[:5] %}
+                            <tr>
+                                {% for h in adv_data.anomaly.sample_headers %}
+                                <td>
+                                    {% if h == 'anomaly' or h == 'Anomaly' %}
+                                        {% if row[h] == -1 or row[h] == '-1' %}
+                                        <span class="badge badge-danger">Outlier (-1)</span>
+                                        {% else %}
+                                        <span class="badge badge-success">Normal (1)</span>
+                                        {% endif %}
+                                    {% elif row[h] is number %}
+                                        {{ "{:.4f}".format(row[h]) }}
+                                    {% else %}
+                                        {{ row[h] }}
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- SECTION 4: DBSCAN Density Clustering           -->
+    <!-- ============================================== -->
+    <section class="m4-section">
+        <div class="section-header-flex">
+            <h2>🌌 DBSCAN Density-Based Spatial Clustering</h2>
+            <span class="table-meta-badge">Noise-Robust Density</span>
+        </div>
+
+        <div class="m4-chart-pair card">
+            <h3 class="m4-chart-group-title">Preprocessed vs Raw Dataset Clustering Projections</h3>
+            <p class="m4-chart-desc">
+                DBSCAN discovers arbitrarily shaped clusters and rejects sensor noise without requiring a predefined cluster count <em>k</em>. Comparing clusters between the preprocessed dataset and raw dataset confirms data cleansing consistency.
+            </p>
+            <div class="m4-chart-row">
+                {% if adv_data.dbscan.preprocessed.image_url %}
+                <div class="m4-chart-card">
+                    <div class="m4-chart-thumb-wrap m4-lightbox-trigger" data-url="{{ adv_data.dbscan.preprocessed.image_url }}" data-title="DBSCAN — Preprocessed Dataset Clusters">
+                        <img src="{{ adv_data.dbscan.preprocessed.image_url }}" alt="DBSCAN Preprocessed Clusters" loading="lazy" class="m4-chart-img">
+                        <div class="m4-chart-overlay"><span>🔍 Zoom &amp; Pan</span></div>
+                    </div>
+                    <div class="m4-chart-footer">
+                        <span class="m4-chart-label">Preprocessed Telemetry (PCA Projection)</span>
+                        <a href="{{ adv_data.dbscan.preprocessed.image_url }}" target="_blank" rel="noopener" class="m4-direct-link" title="Open full resolution">↗ Full Res</a>
+                    </div>
+                    <div style="padding: 0.75rem; background: rgba(0,0,0,0.2); font-size: 0.85rem; display: flex; justify-content: space-around;">
+                        <span><strong>Total:</strong> {{ "{:,.0f}".format(adv_data.dbscan.preprocessed.total) }}</span>
+                        <span><strong>Noise (-1):</strong> <span class="text-amber">{{ adv_data.dbscan.preprocessed.noise }}</span></span>
+                        <span><strong>Core:</strong> <span class="text-emerald">{{ adv_data.dbscan.preprocessed.total - adv_data.dbscan.preprocessed.noise }}</span></span>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if adv_data.dbscan.raw.image_url %}
+                <div class="m4-chart-card">
+                    <div class="m4-chart-thumb-wrap m4-lightbox-trigger" data-url="{{ adv_data.dbscan.raw.image_url }}" data-title="DBSCAN — Raw Dataset Clusters">
+                        <img src="{{ adv_data.dbscan.raw.image_url }}" alt="DBSCAN Raw Clusters" loading="lazy" class="m4-chart-img">
+                        <div class="m4-chart-overlay"><span>🔍 Zoom &amp; Pan</span></div>
+                    </div>
+                    <div class="m4-chart-footer">
+                        <span class="m4-chart-label">Raw Telemetry (PCA Projection)</span>
+                        <a href="{{ adv_data.dbscan.raw.image_url }}" target="_blank" rel="noopener" class="m4-direct-link" title="Open full resolution">↗ Full Res</a>
+                    </div>
+                    <div style="padding: 0.75rem; background: rgba(0,0,0,0.2); font-size: 0.85rem; display: flex; justify-content: space-around;">
+                        <span><strong>Total:</strong> {{ "{:,.0f}".format(adv_data.dbscan.raw.total) }}</span>
+                        <span><strong>Noise (-1):</strong> <span class="text-amber">{{ adv_data.dbscan.raw.noise }}</span></span>
+                        <span><strong>Core:</strong> <span class="text-emerald">{{ adv_data.dbscan.raw.total - adv_data.dbscan.raw.noise }}</span></span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Lightbox Modal for Fullscreen Chart Inspection -->
+<div id="m4-lightbox-modal" class="m4-lightbox-backdrop" aria-hidden="true" style="display: none;">
+    <div class="m4-lightbox-content">
+        <div class="m4-lightbox-header">
+            <span id="m4-lightbox-title" class="m4-lightbox-title">Chart Preview</span>
+            <div class="m4-lightbox-actions">
+                <a id="m4-lightbox-download" href="#" target="_blank" rel="noopener" class="m4-btn-action" title="Open full resolution">↗ Open Original</a>
+                <button id="m4-lightbox-close" class="m4-btn-close" aria-label="Close">✕</button>
+            </div>
+        </div>
+        <div class="m4-lightbox-body">
+            <img id="m4-lightbox-image" src="" alt="Fullscreen Chart">
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const triggers = document.querySelectorAll(".m4-lightbox-trigger");
+    const modal = document.getElementById("m4-lightbox-modal");
+    const modalImg = document.getElementById("m4-lightbox-image");
+    const modalTitle = document.getElementById("m4-lightbox-title");
+    const modalDownload = document.getElementById("m4-lightbox-download");
+    const modalClose = document.getElementById("m4-lightbox-close");
+
+    if (modal) {
+        triggers.forEach(t => {
+            t.addEventListener("click", () => {
+                const url = t.getAttribute("data-url");
+                const title = t.getAttribute("data-title") || "Chart Preview";
+                modalImg.src = url;
+                modalTitle.textContent = title;
+                modalDownload.href = url;
+                modal.style.display = "flex";
+                modal.setAttribute("aria-hidden", "false");
+            });
+        });
+
+        const closeModal = () => {
+            modal.style.display = "none";
+            modal.setAttribute("aria-hidden", "true");
+            modalImg.src = "";
+        };
+
+        modalClose.addEventListener("click", closeModal);
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal) closeModal();
+        });
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && modal.style.display === "flex") closeModal();
+        });
+    }
+});
+</script>
+{% endblock %}

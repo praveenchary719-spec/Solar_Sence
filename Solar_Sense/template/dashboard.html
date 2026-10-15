@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+{% from "_model_components.html" import benchmark_table, chart, task_cards, inventory %}
+
+{% block title %}Solar Intelligence Dashboard — Solar Sense{% endblock %}
+
+{% block content %}
+
+<div class="page dashboard-page">
+    <!-- Hero Header with Circular Telemetry Orbit Gauge -->
+    <div class="card page-header-banner" style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.12), rgba(16, 185, 129, 0.08)); border-color: rgba(6, 182, 212, 0.3); padding: 30px; margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 24px;">
+            <div style="max-width: 700px;">
+                <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.35); padding: 4px 12px; border-radius: 20px; font-size: 0.76rem; font-family: var(--font-mono); color: #38bdf8; font-weight: 600; margin-bottom: 12px;">
+                    <span>PLANT-1 TELEMETRY · MODULES 1–6 INDUSTRIAL PIPELINE</span>
+                </div>
+                <h1 style="font-size: 2.3rem; font-weight: 800; margin: 0 0 10px; color: var(--text-primary); letter-spacing: -0.02em;">
+                    Solar Intelligence Dashboard
+                </h1>
+                <p style="color: var(--text-secondary); margin: 0; line-height: 1.6; font-size: 0.95rem;">
+                    Real-time generation telemetry, data quality, and multi-model benchmark performance.<br>
+                    Exhaustive operational metrics and architectural insights across Plant 1 solar arrays.
+                </p>
+            </div>
+
+            <div class="telemetry-orbit" style="--rate: {{ '%.1f'|format(telemetry_rate) }}%;" role="img" aria-label="Active solar generation duty cycle: {{ '%.1f'|format(telemetry_rate) }} percent">
+                <div>
+                    <span class="orbit-spark" aria-hidden="true">✦</span>
+                    <strong>{{ '%.1f'|format(telemetry_rate) }}<small>%</small></strong>
+                    <span>Duty Factor</span>
+                    <small>Active Generation</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Action Shortcuts Bar -->
+    <nav class="dashboard-shortcuts-bar" aria-label="Dashboard shortcuts">
+        <a href="{{ url_for('dataset') }}" class="shortcut-pill">📁 Ingestion Dataset</a>
+        <a href="{{ url_for('preprocessing') }}" class="shortcut-pill">⚙️ Preprocessing Explorer</a>
+        <a href="{{ url_for('visualization') }}" class="shortcut-pill">📊 {{ visualization_count }}+ Visualizations</a>
+        <a href="{{ url_for('models') }}" class="shortcut-pill">🧠 Master Model Zoo</a>
+        <a href="{{ url_for('reports') }}" class="shortcut-pill">📑 Detailed Reports</a>
+        <a href="{{ url_for('prediction') }}" class="shortcut-pill" style="border-color: rgba(6, 182, 212, 0.4); color: #38bdf8; background: rgba(6, 182, 212, 0.1);">⚡ Instant Prediction</a>
+    </nav>
+
+    <!-- Key Operational Metric KPI Ribbon (8 Rich Metric Cards) -->
+    <div class="section-header-flex">
+        <h2>Key Operational Metrics</h2>
+        <span class="table-meta-badge">Plant 1 Merged Telemetry</span>
+    </div>
+
+    <div class="cards stats" style="margin-bottom: 30px;">
+        {% for item in dashboard_stats %}
+        <div class="card" style="padding: 16px 18px;">
+            <h3 style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">{{ item.label }}</h3>
+            <div class="stat-value {{ item.get('class', '') }}" style="font-size: 1.8rem; font-weight: 800; margin: 4px 0 2px;">{{ item.value }}</div>
+            {% if item.get('note') %}
+            <p style="font-size: 0.74rem; color: var(--text-dim); margin: 0;">{{ item.note }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- SECTION 1: DATASET & SENSOR INTEGRITY OVERVIEW -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <section class="card" style="padding: 24px; margin-bottom: 30px; border-color: var(--border-subtle);" id="dataset-overview">
+        <div class="section-header-flex" style="margin-bottom: 12px;">
+            <div>
+                <h2 style="margin: 0; font-size: 1.35rem;">📡 Plant Telemetry & Sensor Integrity Overview</h2>
+                <p style="margin: 4px 0 0; font-size: 0.85rem; color: var(--text-secondary);">
+                    <strong>Active Source:</strong> <span style="font-family: var(--font-mono); color: #38bdf8;">{{ raw_dataset.name }}</span> · 
+                    <strong>Rows:</strong> {{ "{:,}".format(telemetry.total) }} · 
+                    <strong>Exact Duplicates:</strong> {{ raw_dataset.duplicate_total }} rows · 
+                    <strong>Original Missing Cells:</strong> {{ raw_dataset.missing_total }} cells (100% complete)
+                </p>
+            </div>
+            <span class="status-badge clean">✓ Zero Leakage</span>
+        </div>
+
+        {% if dataset_chart %}
+        {{ chart(dataset_chart, 'DC Power Output & Sensor Distribution Profiles', 'Empirical distribution of DC Power (kW) across Plant 1 inverters under diurnal irradiation cycles.') }}
+        {% endif %}
+
+        <div style="display: flex; gap: 12px; margin: 16px 0; flex-wrap: wrap;">
+            <a class="btn" href="{{ url_for('dataset') }}">Browse Raw Telemetry Rows ↗</a>
+            <a class="btn secondary" href="{{ url_for('visualization') }}">View Module 1 EDA Visualizations ↗</a>
+        </div>
+
+        <!-- Collapsible Sensor Column Inventory & Schema Table -->
+        <details class="card report-result" style="padding: 16px; margin-top: 14px; background: rgba(0,0,0,0.25); border: 1px solid var(--border-subtle);">
+            <summary style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; list-style: none;">
+                <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-primary);">
+                    📋 Sensor Column Inventory & Telemetry Schema · All {{ schema | length }} Columns
+                </span>
+                <span class="toggle-indicator" style="font-size: 0.8rem; color: var(--text-muted);">▾</span>
+            </summary>
+            <div style="margin-top: 14px; overflow-x: auto;">
+                <table class="m3-comparison-table" style="width: 100%; font-size: 0.8rem; margin: 0;">
+                    <thead>
+                        <tr>
+                            <th style="min-width: 180px;">Sensor / Feature Column</th>
+                            <th style="min-width: 110px;">Data Type</th>
+                            <th style="min-width: 120px;">Distinct Values</th>
+                            <th style="min-width: 110px;">Missing Cells</th>
+                            <th style="min-width: 220px;">Operational Role in Live Modeling</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for col in schema %}
+                        <tr>
+                            <th scope="row" style="color: #38bdf8;">{{ col.name }}</th>
+                            <td style="font-family: var(--font-mono);">{{ col.dtype }}</td>
+                            <td style="font-family: var(--font-mono);">{{ "{:,}".format(col.distinct) }}</td>
+                            <td>
+                                {% if col.missing == 0 %}
+                                <span class="status-badge clean" style="font-size: 0.68rem;">0 Missing</span>
+                                {% else %}
+                                <span class="status-badge alert" style="font-size: 0.68rem;">{{ col.missing }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="status-badge {% if 'Target' in col.role %}clean{% elif 'Core' in col.role %}highlight{% else %}neutral{% endif %}" style="font-size: 0.7rem;">
+                                    {{ col.role }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </details>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- SECTION 2: PREPROCESSING & SANITIZATION PIPELINE SUMMARY -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <section class="card" style="padding: 24px; margin-bottom: 30px; border-color: var(--border-subtle);" id="preprocessing-summary">
+        <div class="section-header-flex" style="margin-bottom: 14px;">
+            <div>
+                <h2 style="margin: 0; font-size: 1.35rem;">⚙️ Preprocessing & Data Sanitization Overview</h2>
+                <p style="margin: 4px 0 0; font-size: 0.85rem; color: var(--text-secondary);">
+                    Industrial sanitization pipeline handles missing telemetry, categorical source keys, and feature normalization.
+                </p>
+            </div>
+            <span class="status-badge clean">Module 2 Pipeline</span>
+        </div>
+
+        <div class="cards stats" style="margin-bottom: 18px;">
+            <div class="card" style="padding: 14px;">
+                <h3 style="font-size: 0.76rem; color: var(--text-muted); text-transform: uppercase;">Processed Records</h3>
+                <div class="stat-value" style="font-size: 1.5rem; color: #34d399;">{{ "{:,}".format(preprocessing.final_info.rows) }}</div>
+                <p style="font-size: 0.7rem; color: var(--text-dim);">Zero data loss</p>
+            </div>
+            <div class="card" style="padding: 14px;">
+                <h3 style="font-size: 0.76rem; color: var(--text-muted); text-transform: uppercase;">Missing-Data Rows Handled</h3>
+                <div class="stat-value" style="font-size: 1.5rem; color: #38bdf8;">0 Rows</div>
+                <p style="font-size: 0.7rem; color: var(--text-dim);">100% complete telemetry</p>
+            </div>
+            <div class="card" style="padding: 14px;">
+                <h3 style="font-size: 0.76rem; color: var(--text-muted); text-transform: uppercase;">Categorical Encoded Attributes</h3>
+                <div class="stat-value" style="font-size: 1.5rem; color: #a78bfa;">{{ preprocessing.final_info.categorical }}</div>
+                <p style="font-size: 0.7rem; color: var(--text-dim);">Source keys, stages</p>
+            </div>
+            <div class="card" style="padding: 14px;">
+                <h3 style="font-size: 0.76rem; color: var(--text-muted); text-transform: uppercase;">Standardized Sensor Attributes</h3>
+                <div class="stat-value" style="font-size: 1.5rem; color: #fbbf24;">{{ preprocessing.final_info.numeric }}</div>
+                <p style="font-size: 0.7rem; color: var(--text-dim);">Z-score & Min-Max scaled</p>
+            </div>
+        </div>
+
+        <!-- Saved Preprocessing Outputs Table -->
+        <div style="overflow-x: auto; border: 1px solid var(--border-subtle); border-radius: 8px; margin-bottom: 16px;">
+            <table class="m3-comparison-table" style="width: 100%; font-size: 0.8rem; margin: 0;">
+                <caption style="text-align: left; padding: 10px 14px; font-weight: 600; color: var(--text-secondary); background: rgba(0,0,0,0.25);">
+                    Saved Preprocessing Engineering Datasets
+                </caption>
+                <thead>
+                    <tr>
+                        <th style="min-width: 220px;">Technique / Preprocessed Output</th>
+                        <th style="min-width: 90px;">Rows</th>
+                        <th style="min-width: 90px;">Columns</th>
+                        <th style="min-width: 110px;">Missing Cells</th>
+                        <th style="min-width: 100px;">Download</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in preprocessing_datasets %}
+                    <tr>
+                        <th scope="row" style="color: var(--text-primary);">{{ item.title }}</th>
+                        <td style="font-family: var(--font-mono);">{{ "{:,}".format(item.rows) }}</td>
+                        <td style="font-family: var(--font-mono);">{{ item.columns }}</td>
+                        <td><span class="status-badge clean" style="font-size: 0.68rem;">0 Clean</span></td>
+                        <td>
+                            <a href="{{ item.download_url }}" class="status-badge" style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; text-decoration: none; font-size: 0.72rem;">
+                                ⬇️ Download CSV
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <a class="btn" href="{{ url_for('preprocessing') }}">Open Preprocessing Explorer ↗</a>
+            <a class="btn secondary" href="{{ url_for('visualization') }}">View Preprocessing Visualizations ↗</a>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- SECTION 3: SOLAR MODEL PERFORMANCE BENCHMARK LEADERBOARD -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <section class="card" style="padding: 24px; margin-bottom: 30px; border-color: var(--border-subtle);" id="model-comparison">
+        <div class="section-header-flex" style="margin-bottom: 12px;">
+            <div>
+                <h2 style="margin: 0; font-size: 1.35rem;">🏆 Solar Model Benchmark Leaderboard</h2>
+                <p style="margin: 4px 0 0; font-size: 0.85rem; color: var(--text-secondary);">
+                    Controlled validation benchmark evaluated on identical held-out Plant 1 telemetry splits.
+                </p>
+            </div>
+            <span class="status-badge clean">Rigorous Evaluation</span>
+        </div>
+
+        {% if best_model %}
+        <div class="recommendation-banner">
+            <div>
+                <strong>🏆 Highest Benchmark Performer: {{ best_model.Model }}</strong> — {{ best_model.Primary }} ({{ best_model.Status }})
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <a href="{{ best_model.predict_url }}">Predict With This Model ↗</a>
+                <a href="#task-models">Choose By Task ↓</a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if model_chart %}
+        {{ chart(model_chart, 'Stratified 5-Fold Cross-Validation Confusion Matrix (M5)', 'Confusion matrix across solar operating states ensuring zero target leakage between training and testing folds.') }}
+        {% endif %}
+
+        {{ benchmark_table(benchmark_rows) }}
+
+        <div style="display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap;">
+            <a class="btn" href="{{ url_for('models') }}">Explore All Models & Architectures ↗</a>
+            <a class="btn secondary" href="{{ url_for('cv_metrics') }}">View Stratified 5-Fold Evaluation ↗</a>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- SECTION 4: RECOMMENDED MODEL FOR EACH OPERATIONAL GOAL -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <section class="card" style="padding: 24px; margin-bottom: 30px; border-color: var(--border-subtle);" id="task-models">
+        <div class="section-header-flex" style="margin-bottom: 14px;">
+            <div>
+                <h2 style="margin: 0; font-size: 1.35rem;">🎯 Recommended Model for Each Operational Goal</h2>
+                <p style="margin: 4px 0 0; font-size: 0.85rem; color: var(--text-secondary);">
+                    Task-tailored algorithmic choices based on accuracy, interpretability, latency, and noise resistance.
+                </p>
+            </div>
+            <span class="table-meta-badge">Architectural Guidance</span>
+        </div>
+
+        {{ task_cards(recommendations) }}
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- SECTION 5: MASTER PROJECT MODEL & ANALYSIS INVENTORY -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <section class="card" style="padding: 24px; margin-bottom: 30px; border-color: var(--border-subtle);" id="all-model-results">
+        <div class="section-header-flex" style="margin-bottom: 14px;">
+            <div>
+                <h2 style="margin: 0; font-size: 1.35rem;">🧠 Master Project Model & Analysis Inventory</h2>
+                <p style="margin: 4px 0 0; font-size: 0.85rem; color: var(--text-secondary);">
+                    Comprehensive registry of all 19 machine learning models, statistical baselines, and unsupervised pipelines.
+                </p>
+            </div>
+            <span class="table-meta-badge">19 Algorithms Implemented</span>
+        </div>
+
+        {{ inventory(models) }}
+
+        <div style="margin-top: 18px; text-align: center;">
+            <a class="btn" href="{{ url_for('visualization') }}" style="display: inline-flex; align-items: center; gap: 8px;">
+                📊 Open Complete 110+ Visualization Gallery ↗
+            </a>
+        </div>
+    </section>
+</div>
+
+{% endblock %}

@@ -1,0 +1,4 @@
+Model,Degree,R2_Score,RMSE,MAE,Terms
+Linear Regression (Deg 1),1,0.9513,837.68,461.81,3
+Quadratic Regression (Deg 2),2,0.9565,791.63,406.94,9
+Cubic Polynomial (Deg 3),3,0.957,786.92,398.13,19

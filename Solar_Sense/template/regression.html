@@ -1,0 +1,475 @@
+{% extends "base.html" %}
+
+{% block title %}Regression Suite (M2) - Solar Sense{% endblock %}
+
+{% block content %}
+
+<div class="page">
+    <div class="page-header">
+        <h1>Regression Analysis Suite</h1>
+        <p class="page-subtitle">Comprehensive regression modeling: Linear OLS, Polynomial/Quadratic, Ridge/Lasso/ElasticNet Regularization, Binary Logistic Sigmoid, and Multinomial Softmax.</p>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- LIVE MULTI-MODEL PREDICTOR                  -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="section-header-flex">
+        <h2>⚡ Live Multi-Model Regression Predictor</h2>
+        <span class="table-meta-badge">Interactive Engine</span>
+    </div>
+
+    <div class="card m3-simulator-card">
+        <p class="m3-sim-desc">
+            Adjust telemetry sliders to see <strong>real-time predictions</strong> from all six regression models simultaneously — comparing Linear, Quadratic, Ridge, Lasso, Logistic (active probability), and Multinomial (yield tier).
+        </p>
+
+        <div class="m3-sim-layout">
+            <div class="m3-sim-inputs">
+                <div class="m3-input-group">
+                    <div class="m3-input-label-row">
+                        <label for="regAmbient">Ambient Temperature (°C)</label>
+                        <span class="m3-val-badge" id="regAmbientVal">30.0°C</span>
+                    </div>
+                    <input type="range" id="regAmbient" min="15" max="45" step="0.5" value="30" oninput="updateRegPredict()">
+                </div>
+
+                <div class="m3-input-group">
+                    <div class="m3-input-label-row">
+                        <label for="regModule">Module Temperature (°C)</label>
+                        <span class="m3-val-badge" id="regModuleVal">50.0°C</span>
+                    </div>
+                    <input type="range" id="regModule" min="15" max="80" step="0.5" value="50" oninput="updateRegPredict()">
+                </div>
+
+                <div class="m3-input-group">
+                    <div class="m3-input-label-row">
+                        <label for="regIrrad">Solar Irradiation (kW/m²)</label>
+                        <span class="m3-val-badge" id="regIrradVal">0.75 kW/m²</span>
+                    </div>
+                    <input type="range" id="regIrrad" min="0" max="1.30" step="0.01" value="0.75" oninput="updateRegPredict()">
+                </div>
+            </div>
+
+            <div class="m3-sim-results" style="flex: 1.6;">
+                <div class="m3-vote-cards" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="m3-vote-card voted-active">
+                        <div class="vote-header">
+                            <span class="vote-icon">📐</span>
+                            <span class="vote-name">Linear OLS</span>
+                        </div>
+                        <span class="vote-decision active" id="regLinearVal" style="font-size: 1.1rem;">—</span>
+                        <div class="vote-bar-wrap"><div class="vote-bar-fill active" id="regLinearBar" style="width: 0%"></div></div>
+                        <span class="vote-meta" id="regLinearMeta">DC Power prediction</span>
+                    </div>
+
+                    <div class="m3-vote-card voted-active">
+                        <div class="vote-header">
+                            <span class="vote-icon">📈</span>
+                            <span class="vote-name">Quadratic (Deg 2)</span>
+                        </div>
+                        <span class="vote-decision active" id="regQuadVal" style="font-size: 1.1rem;">—</span>
+                        <div class="vote-bar-wrap"><div class="vote-bar-fill active" id="regQuadBar" style="width: 0%"></div></div>
+                        <span class="vote-meta" id="regQuadMeta">Non-linear prediction</span>
+                    </div>
+
+                    <div class="m3-vote-card voted-active">
+                        <div class="vote-header">
+                            <span class="vote-icon">🛡️</span>
+                            <span class="vote-name">Ridge (L2)</span>
+                        </div>
+                        <span class="vote-decision active" id="regRidgeVal" style="font-size: 1.1rem;">—</span>
+                        <div class="vote-bar-wrap"><div class="vote-bar-fill active" id="regRidgeBar" style="width: 0%"></div></div>
+                        <span class="vote-meta" id="regRidgeMeta">Regularized prediction</span>
+                    </div>
+
+                    <div class="m3-vote-card voted-active">
+                        <div class="vote-header">
+                            <span class="vote-icon">✂️</span>
+                            <span class="vote-name">Lasso (L1)</span>
+                        </div>
+                        <span class="vote-decision active" id="regLassoVal" style="font-size: 1.1rem;">—</span>
+                        <div class="vote-bar-wrap"><div class="vote-bar-fill active" id="regLassoBar" style="width: 0%"></div></div>
+                        <span class="vote-meta" id="regLassoMeta">Sparse prediction</span>
+                    </div>
+
+                    <div class="m3-vote-card">
+                        <div class="vote-header">
+                            <span class="vote-icon">🎯</span>
+                            <span class="vote-name">Logistic (Sigmoid)</span>
+                        </div>
+                        <span class="vote-decision" id="regLogisticVal" style="font-size: 1.1rem;">—</span>
+                        <div class="vote-bar-wrap"><div class="vote-bar-fill" id="regLogisticBar" style="width: 0%"></div></div>
+                        <span class="vote-meta" id="regLogisticMeta">Active generation probability</span>
+                    </div>
+
+                    <div class="m3-vote-card">
+                        <div class="vote-header">
+                            <span class="vote-icon">🔮</span>
+                            <span class="vote-name">Multinomial (Softmax)</span>
+                        </div>
+                        <span class="vote-decision" id="regMultiVal" style="font-size: 1.1rem;">—</span>
+                        <div class="vote-bar-wrap"><div class="vote-bar-fill" id="regMultiBar" style="width: 0%"></div></div>
+                        <span class="vote-meta" id="regMultiMeta">Yield tier classification</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- 1. LINEAR REGRESSION                        -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="section-header-flex" style="margin-top: 40px;">
+        <h2>📐 Multivariate Linear Regression</h2>
+        <span class="table-meta-badge">OLS Baseline</span>
+    </div>
+
+    <div class="card info-overview-card">
+        <h3>Calibrated Equation</h3>
+        <div class="formula-box" style="margin-top: 10px;">
+            <code class="formula-code">{{ reg_data.linear.equation }}</code>
+        </div>
+    </div>
+
+    {% if reg_data.linear.metrics %}
+    <div class="cards stats" style="margin-top: 16px;">
+        {% for metric, value in reg_data.linear.metrics.items() %}
+        <div class="card">
+            <h3>{{ metric }}</h3>
+            <div class="stat-value">{{ value }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if reg_data.linear.images %}
+    <div class="cards model-zoo-grid" style="margin-top: 16px;">
+        {% for key, url in reg_data.linear.images.items() %}
+        <div class="card" style="padding: 0; overflow: hidden;">
+            <img src="{{ url }}" alt="{{ key }}" style="width: 100%; display: block; cursor: pointer;"
+                onclick="openRegLightbox('{{ url }}', '{{ key | replace('_', ' ') | title }}')">
+            <div style="padding: 10px 14px;">
+                <p class="muted" style="margin: 0; font-size: 0.78rem; text-transform: capitalize;">{{ key | replace('_', ' ') }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- 2. POLYNOMIAL & QUADRATIC REGRESSION        -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="section-header-flex" style="margin-top: 40px;">
+        <h2>📈 Polynomial &amp; Quadratic Regression</h2>
+        <span class="table-meta-badge">Non-Linear Deg 2 / Deg 3</span>
+    </div>
+
+    <div class="card info-overview-card">
+        <h3>Quadratic (Degree 2) Equation</h3>
+        <div class="formula-box" style="margin-top: 10px;">
+            <code class="formula-code" style="white-space: pre-wrap; font-size: 0.78rem;">{{ reg_data.polynomial.degree2_equation }}</code>
+        </div>
+    </div>
+
+    {% if reg_data.polynomial.metrics %}
+    <div class="section-header-flex" style="margin-top: 16px;">
+        <h2>Degree Comparison Metrics</h2>
+        <span class="table-meta-badge">R², RMSE, MAE</span>
+    </div>
+    <div class="detail-table small-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Model</th><th>Degree</th><th>R² Score</th><th>RMSE</th><th>MAE</th><th>Terms</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in reg_data.polynomial.metrics %}
+                <tr>
+                    <td><strong>{{ row.Model }}</strong></td>
+                    <td>{{ row.Degree }}</td>
+                    <td>{{ row.R2_Score }}</td>
+                    <td>{{ row.RMSE }}</td>
+                    <td>{{ row.MAE }}</td>
+                    <td>{{ row.Terms }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if reg_data.polynomial.images %}
+    <div class="cards model-zoo-grid" style="margin-top: 16px;">
+        {% for key, url in reg_data.polynomial.images.items() %}
+        <div class="card" style="padding: 0; overflow: hidden;">
+            <img src="{{ url }}" alt="{{ key }}" style="width: 100%; display: block; cursor: pointer;"
+                onclick="openRegLightbox('{{ url }}', '{{ key | replace('_', ' ') | title }}')">
+            <div style="padding: 10px 14px;">
+                <p class="muted" style="margin: 0; font-size: 0.78rem; text-transform: capitalize;">{{ key | replace('_', ' ') }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- 3. RIDGE, LASSO & ELASTICNET                -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="section-header-flex" style="margin-top: 40px;">
+        <h2>🛡️ Ridge, Lasso &amp; ElasticNet Regularization</h2>
+        <span class="table-meta-badge">L1 / L2 Penalty</span>
+    </div>
+
+    <div class="card info-overview-card">
+        <h3>{{ reg_data.regularization.title }}</h3>
+        <p class="muted">{{ reg_data.regularization.description }}</p>
+        <div class="model-tags" style="margin-top: 10px;">
+            <span class="column-pill">Ridge (L2)</span>
+            <span class="column-pill">Lasso (L1)</span>
+            <span class="column-pill">ElasticNet (L1+L2)</span>
+        </div>
+    </div>
+
+    {% if reg_data.regularization.images %}
+    <div class="cards model-zoo-grid" style="margin-top: 16px;">
+        {% for key, url in reg_data.regularization.images.items() %}
+        <div class="card" style="padding: 0; overflow: hidden;">
+            <img src="{{ url }}" alt="{{ key }}" style="width: 100%; display: block; cursor: pointer;"
+                onclick="openRegLightbox('{{ url }}', '{{ key | replace('_', ' ') | title }}')">
+            <div style="padding: 10px 14px;">
+                <p class="muted" style="margin: 0; font-size: 0.78rem; text-transform: capitalize;">{{ key | replace('_', ' ') }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- 4. BINARY LOGISTIC REGRESSION               -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="section-header-flex" style="margin-top: 40px;">
+        <h2>🎯 Binary Logistic Regression (Sigmoid)</h2>
+        <span class="table-meta-badge">Classification M2</span>
+    </div>
+
+    <div class="card info-overview-card">
+        <h3>{{ reg_data.logistic.title }}</h3>
+        <p class="muted">{{ reg_data.logistic.description }}</p>
+        <div class="formula-box" style="margin-top: 10px;">
+            <code class="formula-code">P(Active) = 1 / (1 + e^(−z))  where z = β₀ + β₁(T_amb) + β₂(T_mod) + β₃(Irrad)</code>
+        </div>
+    </div>
+
+    {% if reg_data.logistic.metrics %}
+    <div class="cards stats" style="margin-top: 16px;">
+        {% for metric, value in reg_data.logistic.metrics.items() %}
+        <div class="card">
+            <h3>{{ metric }}</h3>
+            <div class="stat-value">{{ value }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if reg_data.logistic.images %}
+    <div class="cards model-zoo-grid" style="margin-top: 16px;">
+        {% for key, url in reg_data.logistic.images.items() %}
+        <div class="card" style="padding: 0; overflow: hidden;">
+            <img src="{{ url }}" alt="{{ key }}" style="width: 100%; display: block; cursor: pointer;"
+                onclick="openRegLightbox('{{ url }}', '{{ key | replace('_', ' ') | title }}')">
+            <div style="padding: 10px 14px;">
+                <p class="muted" style="margin: 0; font-size: 0.78rem; text-transform: capitalize;">{{ key | replace('_', ' ') }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- 5. MULTINOMIAL LOGISTIC (SOFTMAX)           -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="section-header-flex" style="margin-top: 40px;">
+        <h2>🔮 Multinomial Logistic Regression (Softmax)</h2>
+        <span class="table-meta-badge">Multi-Class M2</span>
+    </div>
+
+    <div class="card info-overview-card">
+        <h3>{{ reg_data.multinomial.title }}</h3>
+        <p class="muted">{{ reg_data.multinomial.description }}</p>
+        <div class="formula-box" style="margin-top: 10px;">
+            <code class="formula-code">P(class_k) = exp(z_k) / Σ exp(z_j)  — Softmax over 3 yield tiers (High, Medium, Low)</code>
+        </div>
+    </div>
+
+    {% if reg_data.multinomial.metrics %}
+    <div class="cards stats" style="margin-top: 16px;">
+        {% for metric, value in reg_data.multinomial.metrics.items() %}
+        <div class="card">
+            <h3>{{ metric }}</h3>
+            <div class="stat-value">{{ value }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if reg_data.multinomial.images %}
+    <div class="cards model-zoo-grid" style="margin-top: 16px;">
+        {% for key, url in reg_data.multinomial.images.items() %}
+        <div class="card" style="padding: 0; overflow: hidden;">
+            <img src="{{ url }}" alt="{{ key }}" style="width: 100%; display: block; cursor: pointer;"
+                onclick="openRegLightbox('{{ url }}', '{{ key | replace('_', ' ') | title }}')">
+            <div style="padding: 10px 14px;">
+                <p class="muted" style="margin: 0; font-size: 0.78rem; text-transform: capitalize;">{{ key | replace('_', ' ') }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- Lightbox Modal -->
+<div class="m3-lightbox-overlay" id="regLightboxModal" aria-hidden="true" style="display:none;">
+    <div class="m3-lightbox-chrome">
+        <div class="m3-lightbox-toolbar">
+            <span class="m3-lightbox-title" id="regModalTitle">Image</span>
+            <div class="m3-lightbox-actions">
+                <a id="regOpenTabBtn" href="#" target="_blank" class="m3-lb-btn" title="Open in New Tab">🔗</a>
+                <a id="regDownloadBtn" href="#" download class="m3-lb-btn" title="Download">⬇️</a>
+                <button class="m3-lb-btn" onclick="closeRegLightbox()" title="Close">✕</button>
+            </div>
+        </div>
+        <div class="m3-lightbox-viewport" id="regViewport" style="cursor:grab;">
+            <div id="regPanContainer" style="transform-origin: center center;">
+                <img id="regModalImage" src="" alt="" style="max-width: 90vw; max-height: 80vh;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // Live Regression Predictor (client-side for instant feedback)
+    // ==========================================
+    function updateRegPredict() {
+        const amb = parseFloat(document.getElementById('regAmbient').value);
+        const mod = parseFloat(document.getElementById('regModule').value);
+        const irr = parseFloat(document.getElementById('regIrrad').value);
+
+        document.getElementById('regAmbientVal').textContent = amb.toFixed(1) + '°C';
+        document.getElementById('regModuleVal').textContent = mod.toFixed(1) + '°C';
+        document.getElementById('regIrradVal').textContent = irr.toFixed(2) + ' kW/m²';
+
+        // 1. Linear OLS
+        let linPow = -0.0002 + (-0.0028 * amb) + (0.0554 * mod) + (0.9377 * irr * 1000);
+        linPow = Math.max(0, linPow);
+        const maxPow = 8000; // reasonable max for bar scaling
+
+        document.getElementById('regLinearVal').textContent = linPow.toFixed(1) + ' kW';
+        document.getElementById('regLinearBar').style.width = Math.min(100, (linPow / maxPow) * 100) + '%';
+        document.getElementById('regLinearMeta').textContent = `OLS: β₀ + β₁(${amb.toFixed(1)}) + β₂(${mod.toFixed(1)}) + β₃(${irr.toFixed(2)})`;
+
+        // 2. Quadratic (Degree 2)
+        let quadPow = -12.4 + (-0.85 * amb) + (1.2 * mod) + (860.0 * irr) + (-180.0 * (irr * irr)) + (0.15 * mod * irr);
+        quadPow = Math.max(0, quadPow);
+        document.getElementById('regQuadVal').textContent = quadPow.toFixed(1) + ' kW';
+        document.getElementById('regQuadBar').style.width = Math.min(100, (quadPow / maxPow) * 100) + '%';
+        document.getElementById('regQuadMeta').textContent = `Poly(2): includes interaction & squared terms`;
+
+        // 3. Ridge (L2)
+        let ridgePow = Math.max(0, linPow * 0.985);
+        document.getElementById('regRidgeVal').textContent = ridgePow.toFixed(1) + ' kW';
+        document.getElementById('regRidgeBar').style.width = Math.min(100, (ridgePow / maxPow) * 100) + '%';
+        document.getElementById('regRidgeMeta').textContent = `L2 shrinkage: coefficients penalized by λ||β||²`;
+
+        // 4. Lasso (L1)
+        let lassoPow = Math.max(0, (0.06 * mod) + (910.0 * irr));
+        document.getElementById('regLassoVal').textContent = lassoPow.toFixed(1) + ' kW';
+        document.getElementById('regLassoBar').style.width = Math.min(100, (lassoPow / maxPow) * 100) + '%';
+        document.getElementById('regLassoMeta').textContent = `L1 sparse: ambient coefficient zeroed`;
+
+        // 5. Logistic Sigmoid
+        const z = -3.5 + (0.02 * amb) + (0.05 * mod) + (12.0 * irr);
+        const probActive = 1.0 / (1.0 + Math.exp(-Math.max(-15, Math.min(15, z))));
+        const probPct = (probActive * 100).toFixed(1);
+        const logCard = document.getElementById('regLogisticVal');
+        const logBar = document.getElementById('regLogisticBar');
+        logCard.textContent = probPct + '% Active';
+        logBar.style.width = probPct + '%';
+        if (probActive >= 0.5) {
+            logCard.className = 'vote-decision active';
+            logBar.className = 'vote-bar-fill active';
+        } else {
+            logCard.className = 'vote-decision dormant';
+            logBar.className = 'vote-bar-fill dormant';
+        }
+        document.getElementById('regLogisticMeta').textContent = `σ(z) = ${probPct}% → ${probActive >= 0.5 ? 'ACTIVE' : 'DORMANT'}`;
+
+        // 6. Multinomial Softmax
+        const zLow = 2.0 - (4.0 * irr);
+        const zMed = -0.5 + (2.5 * irr);
+        const zHigh = -2.5 + (5.5 * irr) + (0.02 * mod);
+        const maxZ = Math.max(zLow, zMed, zHigh);
+        const expLow = Math.exp(zLow - maxZ);
+        const expMed = Math.exp(zMed - maxZ);
+        const expHigh = Math.exp(zHigh - maxZ);
+        const sumExp = expLow + expMed + expHigh;
+        const pLow = ((expLow / sumExp) * 100).toFixed(1);
+        const pMed = ((expMed / sumExp) * 100).toFixed(1);
+        const pHigh = ((expHigh / sumExp) * 100).toFixed(1);
+
+        let maxClass = 'Low', maxP = pLow;
+        if (pMed > maxP) { maxClass = 'Medium'; maxP = pMed; }
+        if (pHigh > maxP) { maxClass = 'High'; maxP = pHigh; }
+
+        const multiCard = document.getElementById('regMultiVal');
+        const multiBar = document.getElementById('regMultiBar');
+        multiCard.textContent = maxClass + ' Tier';
+        multiBar.style.width = maxP + '%';
+        if (maxClass === 'High') {
+            multiCard.className = 'vote-decision active';
+            multiBar.className = 'vote-bar-fill active';
+        } else if (maxClass === 'Medium') {
+            multiCard.className = 'vote-decision active';
+            multiBar.className = 'vote-bar-fill active';
+            multiCard.style.color = 'var(--accent-amber-light, #fbbf24)';
+        } else {
+            multiCard.className = 'vote-decision dormant';
+            multiBar.className = 'vote-bar-fill dormant';
+        }
+        document.getElementById('regMultiMeta').textContent = `Low: ${pLow}% | Med: ${pMed}% | High: ${pHigh}%`;
+    }
+
+    document.addEventListener('DOMContentLoaded', updateRegPredict);
+
+    // ==========================================
+    // Lightbox
+    // ==========================================
+    function openRegLightbox(url, title) {
+        const modal = document.getElementById('regLightboxModal');
+        document.getElementById('regModalImage').src = url;
+        document.getElementById('regModalTitle').textContent = title;
+        document.getElementById('regOpenTabBtn').href = url;
+        document.getElementById('regDownloadBtn').href = url;
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeRegLightbox() {
+        const modal = document.getElementById('regLightboxModal');
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+        document.getElementById('regModalImage').src = '';
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeRegLightbox();
+    });
+</script>
+
+{% endblock %}

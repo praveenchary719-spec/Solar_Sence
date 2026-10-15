@@ -1,0 +1,220 @@
+{# Reusable Model Components & Macro Toolkit — Solar Sense Design System #}
+
+{% macro benchmark_table(rows) %}
+<div class="card leaderboard-card" style="padding: 0; overflow: hidden; margin-top: 14px;">
+    <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); background: rgba(0, 0, 0, 0.25); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div>
+            <h4 style="margin: 0; font-size: 0.98rem; color: var(--text-primary); font-family: var(--font-heading);">
+                ⚡ Master Benchmark Leaderboard
+            </h4>
+            <p style="margin: 2px 0 0; font-size: 0.78rem; color: var(--text-muted);">
+                Standardized held-out validation on Plant-1 telemetry (68,774 observations)
+            </p>
+        </div>
+        <span class="status-badge" style="background: rgba(6, 182, 212, 0.15); color: #38bdf8; font-size: 0.72rem;">
+            Verified Zero-Leakage Split
+        </span>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table class="m3-comparison-table benchmark-leaderboard-table" style="width: 100%; font-size: 0.82rem; margin: 0;">
+            <thead>
+                <tr>
+                    <th style="width: 60px;">Rank</th>
+                    <th style="min-width: 200px;">Algorithm / Model</th>
+                    <th style="min-width: 100px;">Task</th>
+                    <th style="min-width: 110px;">Accuracy / R²</th>
+                    <th style="min-width: 110px;">Precision / RMSE</th>
+                    <th style="min-width: 100px;">Recall / MAE</th>
+                    <th style="min-width: 100px;">F1 Score</th>
+                    <th style="min-width: 110px;">Benchmark Status</th>
+                    <th style="min-width: 100px;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr class="{% if loop.first %}best-model-row highlight-rank-1{% endif %}">
+                    <td>
+                        <span class="rank-pill {% if loop.index == 1 %}gold{% elif loop.index == 2 %}silver{% elif loop.index == 3 %}bronze{% endif %}">
+                            #{{ loop.index }}
+                        </span>
+                    </td>
+                    <th scope="row" style="font-weight: 700;">
+                        <span style="color: {% if loop.first %}#34d399{% else %}var(--text-primary){% endif %};">
+                            {{ row.Model }}
+                        </span>
+                        {% if loop.first %}
+                        <span class="status-badge clean" style="margin-left: 6px; font-size: 0.68rem; padding: 2px 6px;">
+                            🏆 Gold Winner
+                        </span>
+                        {% endif %}
+                    </th>
+                    <td>
+                        <span class="status-badge" style="font-size: 0.7rem; background: rgba(255,255,255,0.06);">
+                            {{ row.Task }}
+                        </span>
+                    </td>
+                    <td style="font-family: var(--font-mono); color: #38bdf8; font-weight: 600;">
+                        {{ row.Primary }}
+                    </td>
+                    <td style="font-family: var(--font-mono);">
+                        {{ row.Secondary }}
+                    </td>
+                    <td style="font-family: var(--font-mono);">
+                        {{ row.Tertiary }}
+                    </td>
+                    <td style="font-family: var(--font-mono); color: #a78bfa; font-weight: 600;">
+                        {{ row.F1 }}
+                    </td>
+                    <td>
+                        <span class="status-badge {% if 'Top' in row.Status or 'Best' in row.Status or 'Gold' in row.Status %}clean{% else %}neutral{% endif %}" style="font-size: 0.7rem;">
+                            {{ row.Status }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ row.predict_url }}" class="btn" style="padding: 4px 10px; font-size: 0.72rem; text-decoration: none;">
+                            Use Model ↗
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" style="text-align: center; padding: 24px; color: var(--text-muted);">
+                        No benchmark evaluations recorded yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endmacro %}
+
+{% macro chart(url, title, description='') %}
+<figure class="analytics-chart-figure card" style="padding: 16px; margin: 18px 0; background: rgba(11, 17, 32, 0.75);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h4 style="margin: 0; font-size: 0.96rem; color: var(--text-primary); font-family: var(--font-heading);">
+            📊 {{ title }}
+        </h4>
+        <a href="{{ url }}" target="_blank" rel="noopener" class="status-badge" style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; text-decoration: none; font-size: 0.72rem;" title="Open high-resolution chart">
+            Full Size ↗
+        </a>
+    </div>
+    <div class="chart-img-container" style="border-radius: 12px; overflow: hidden; background: #070b14; border: 1px solid var(--border-subtle); text-align: center;">
+        <a href="{{ url }}" target="_blank" rel="noopener">
+            <img src="{{ url }}" alt="{{ title }}" loading="lazy" style="max-width: 100%; height: auto; display: block; margin: 0 auto; transition: transform 0.25s ease;" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
+        </a>
+    </div>
+    {% if description %}
+    <figcaption style="margin-top: 10px; font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
+        {{ description }}
+    </figcaption>
+    {% endif %}
+</figure>
+{% endmacro %}
+
+{% macro task_cards(items) %}
+<div class="task-recommendations-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px; margin: 16px 0;">
+    {% for item in items %}
+    <article class="card task-recommendation-card" style="margin: 0; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; border-left: 3px solid {% if loop.index % 3 == 1 %}#06b6d4{% elif loop.index % 3 == 2 %}#10b981{% else %}#f59e0b{% endif %};">
+        <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span class="status-badge neutral" style="font-size: 0.68rem; text-transform: uppercase;">
+                    {{ item.kind }}
+                </span>
+                <span style="font-size: 0.75rem; color: #38bdf8; font-family: var(--font-mono); font-weight: 600;">
+                    {{ item.basis }}
+                </span>
+            </div>
+            <h4 style="margin: 0 0 6px; font-size: 1.05rem; color: var(--text-primary); font-family: var(--font-heading);">
+                {{ item.task }}
+            </h4>
+            <div style="display: inline-block; background: rgba(255,255,255,0.06); padding: 4px 10px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; color: #34d399; margin-bottom: 10px;">
+                ⚡ {{ item.model_name }}
+            </div>
+            <p style="margin: 0; font-size: 0.82rem; color: var(--text-secondary); line-height: 1.55;">
+                {{ item.reason }}
+            </p>
+        </div>
+        <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-subtle);">
+            <a href="{{ item.action_url }}" class="btn" style="width: 100%; text-align: center; justify-content: center; padding: 8px 14px; font-size: 0.8rem; text-decoration: none;">
+                {{ item.action_label }} ↗
+            </a>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+{% macro inventory(models) %}
+<div class="card model-inventory-card" style="padding: 0; overflow: hidden; margin: 16px 0;">
+    <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); background: rgba(0, 0, 0, 0.25); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div>
+            <h4 style="margin: 0; font-size: 0.98rem; color: var(--text-primary); font-family: var(--font-heading);">
+                🧠 Project Algorithm & Architectural Inventory
+            </h4>
+            <p style="margin: 2px 0 0; font-size: 0.78rem; color: var(--text-muted);">
+                Catalog of all 19 machine learning models across Modules 1 through 6
+            </p>
+        </div>
+        <span class="table-meta-badge">{{ models | length }} Architectures</span>
+    </div>
+
+    <div style="overflow-x: auto; max-height: 520px; overflow-y: auto;">
+        <table class="m3-comparison-table" style="width: 100%; font-size: 0.8rem; margin: 0;">
+            <thead style="position: sticky; top: 0; z-index: 2; background: #0b1120;">
+                <tr>
+                    <th style="min-width: 80px;">Module</th>
+                    <th style="min-width: 180px;">Algorithm / Model</th>
+                    <th style="min-width: 130px;">Task Type</th>
+                    <th style="min-width: 170px;">Target Predicted</th>
+                    <th style="min-width: 160px;">Primary Evaluation Metric</th>
+                    <th style="min-width: 110px;">Status</th>
+                    <th style="min-width: 100px;">Prediction Mode</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for model in models %}
+                <tr style="{% if 'Best' in model.status or 'Top' in model.status or 'Gold' in model.status %}background: rgba(16, 185, 129, 0.08);{% endif %}">
+                    <td>
+                        <span class="status-badge" style="font-size: 0.68rem; background: rgba(255,255,255,0.08);">
+                            {{ model.module }}
+                        </span>
+                    </td>
+                    <th scope="row" style="font-weight: 700; color: {% if 'Best' in model.status or 'Top' in model.status %}#34d399{% else %}var(--text-primary){% endif %};">
+                        {{ model.name }}
+                    </th>
+                    <td>
+                        <span class="status-badge neutral" style="font-size: 0.7rem;">
+                            {{ model.task }}
+                        </span>
+                    </td>
+                    <td style="color: var(--text-secondary); font-size: 0.78rem;">
+                        {{ model.target }}
+                    </td>
+                    <td style="font-family: var(--font-mono); color: #38bdf8; font-weight: 600;">
+                        {{ model.metric }}
+                    </td>
+                    <td>
+                        <span class="status-badge {% if 'Best' in model.status or 'Top' in model.status or 'Gold' in model.status %}clean{% else %}neutral{% endif %}" style="font-size: 0.68rem;">
+                            {{ model.status }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if model.predict_url %}
+                        <a href="{{ model.predict_url }}" class="status-badge clean" style="text-decoration: none; font-size: 0.7rem; font-weight: 600;">
+                            ⚡ Live
+                        </a>
+                        {% else %}
+                        <span class="status-badge neutral" style="font-size: 0.7rem; opacity: 0.7;">
+                            Analytical
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endmacro %}

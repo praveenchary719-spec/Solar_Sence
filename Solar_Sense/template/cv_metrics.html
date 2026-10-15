@@ -1,0 +1,446 @@
+{% extends "base.html" %}
+
+{% block title %}Cross-Validated Decision Tree Metrics (M5) — Solar Sense{% endblock %}
+
+{% block content %}
+<div class="page m4-page m5-page">
+    <!-- Hero Header -->
+    <div class="m4-hero-header">
+        <div class="hero-badge">🎯 MODULE 5 — RIGOROUS CROSS-VALIDATION &amp; EVALUATION</div>
+        <h1 class="m4-main-title">Decision Tree Cross-Validated Performance &amp; Metrics</h1>
+        <p class="m4-subtitle">
+            Comprehensive <strong>Stratified 5-Fold Cross-Validation</strong> evaluation across both classification and regression metrics. Analyzes power output discretization into <strong>High, Low, Medium, and Zero</strong> states, complete with permutation importances and outlier stress testing.
+        </p>
+    </div>
+
+    <!-- Quick Telemetry Stats Strip -->
+    <section class="m4-section">
+        <div class="section-header-flex">
+            <h2>🏆 5-Fold Cross-Validation Benchmark</h2>
+            <span class="table-meta-badge">Stratified 5-Fold CV</span>
+        </div>
+        <div class="kpi-grid">
+            <div class="card kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-label">CV Accuracy</span>
+                    <span class="kpi-icon">🎯</span>
+                </div>
+                <div class="kpi-value text-emerald">
+                    {{ m5_data.performance.get('Accuracy', {}).get('pct', '99.98') }}%
+                </div>
+                <div class="kpi-meta">Score: {{ m5_data.performance.get('Accuracy', {}).get('score', '0.999796') }} across 68,774 samples</div>
+            </div>
+            <div class="card kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-label">Weighted F1 Score</span>
+                    <span class="kpi-icon">⚡</span>
+                </div>
+                <div class="kpi-value text-cyan">
+                    {{ m5_data.performance.get('F1 Score', {}).get('pct', '99.98') }}%
+                </div>
+                <div class="kpi-meta">Harmonic mean of precision &amp; recall</div>
+            </div>
+            <div class="card kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-label">ROC-AUC (OVR)</span>
+                    <span class="kpi-icon">📈</span>
+                </div>
+                <div class="kpi-value text-indigo">
+                    {{ m5_data.performance.get('ROC-AUC', {}).get('pct', '99.99') }}%
+                </div>
+                <div class="kpi-meta">Score: {{ m5_data.performance.get('ROC-AUC', {}).get('score', '0.999881') }} discriminative power</div>
+            </div>
+            <div class="card kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-label">R² Pseudo Score</span>
+                    <span class="kpi-icon">📐</span>
+                </div>
+                <div class="kpi-value text-amber">
+                    {{ m5_data.performance.get('P-Square (R2)', {}).get('score', '0.999683') }}
+                </div>
+                <div class="kpi-meta">RMSE: {{ m5_data.performance.get('RMSE', {}).get('score', '0.0235') }} | MAE: {{ m5_data.performance.get('MAE', {}).get('score', '0.0003') }}</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- SECTION 1: Confusion Matrix & Heatmap          -->
+    <!-- ============================================== -->
+    <section class="m4-section">
+        <div class="section-header-flex">
+            <h2>📊 Confusion Matrix &amp; Multi-Class Predictions</h2>
+            <span class="table-meta-badge">4 Solar Power Regimes</span>
+        </div>
+
+        <div class="grid-2-col">
+            {% if m5_data.image_urls.confusion_matrix %}
+            <div class="card m4-chart-card">
+                <div class="m4-chart-thumb-wrap m4-lightbox-trigger" data-url="{{ m5_data.image_urls.confusion_matrix }}" data-title="Decision Tree Confusion Matrix Heatmap">
+                    <img src="{{ m5_data.image_urls.confusion_matrix }}" alt="Decision Tree Confusion Matrix Heatmap" loading="lazy" class="m4-chart-img">
+                    <div class="m4-chart-overlay"><span>🔍 Zoom &amp; Pan</span></div>
+                </div>
+                <div class="m4-chart-footer">
+                    <span class="m4-chart-label">Cross-Validated Confusion Matrix Heatmap</span>
+                    <a href="{{ m5_data.image_urls.confusion_matrix }}" target="_blank" rel="noopener" class="m4-direct-link" title="Open full resolution">↗ Full Res</a>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card">
+                <h3 style="font-size: 1.15rem; margin-bottom: 0.75rem;">Multi-Class Tabulation Matrix</h3>
+                <p class="muted" style="line-height: 1.6; margin-bottom: 1rem;">
+                    Cross-validated confusion matrix showing actual vs predicted telemetry classifications across <strong>Zero, Low, Medium, and High</strong> solar output states.
+                </p>
+
+                {% if m5_data.confusion.rows %}
+                <div style="overflow-x: auto;">
+                    <table class="data-table" style="font-size: 0.85rem; text-align: center;">
+                        <thead>
+                            <tr>
+                                <th style="text-align: left;">Actual \ Predicted</th>
+                                {% for h in m5_data.confusion.headers %}
+                                <th>Pred_{{ h }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in m5_data.confusion.rows %}
+                            <tr>
+                                <td style="text-align: left;"><strong>Act_{{ row.actual }}</strong></td>
+                                {% for val in row.counts %}
+                                <td>
+                                    {% if val > 1000 %}
+                                    <span class="badge badge-success" style="font-weight: 700;">{{ "{:,.0f}".format(val) }}</span>
+                                    {% elif val > 0 %}
+                                    <span class="badge badge-warning" style="font-weight: 700;">{{ val }}</span>
+                                    {% else %}
+                                    <span style="opacity: 0.35;">0</span>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+
+                <div class="m4-explainer-grid" style="grid-template-columns: 1fr 1fr; margin-top: 1rem;">
+                    <div class="card p-3" style="background: rgba(16, 185, 129, 0.05);">
+                        <span class="muted" style="font-size: 0.8rem;">TOTAL CORRECT</span>
+                        <div style="font-size: 1.3rem; font-weight: 700; color: #10b981; margin-top: 0.25rem;">68,760</div>
+                        <span class="muted" style="font-size: 0.75rem;">99.98% diagonal agreement</span>
+                    </div>
+                    <div class="card p-3" style="background: rgba(239, 68, 68, 0.05);">
+                        <span class="muted" style="font-size: 0.8rem;">MISCLASSIFIED</span>
+                        <div style="font-size: 1.3rem; font-weight: 700; color: #ef4444; margin-top: 0.25rem;">14</div>
+                        <span class="muted" style="font-size: 0.75rem;">0.02% boundary edge cases</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- SECTION 2: Feature Importance                  -->
+    <!-- ============================================== -->
+    <section class="m4-section">
+        <div class="section-header-flex">
+            <h2>🌲 Feature Importance &amp; Permutation Impact</h2>
+            <span class="table-meta-badge">Gini vs Permutation</span>
+        </div>
+
+        <div class="grid-2-col">
+            {% if m5_data.image_urls.feature_importance %}
+            <div class="card m4-chart-card">
+                <div class="m4-chart-thumb-wrap m4-lightbox-trigger" data-url="{{ m5_data.image_urls.feature_importance }}" data-title="Decision Tree Feature Importance Bar Chart">
+                    <img src="{{ m5_data.image_urls.feature_importance }}" alt="Decision Tree Feature Importance" loading="lazy" class="m4-chart-img">
+                    <div class="m4-chart-overlay"><span>🔍 Zoom &amp; Pan</span></div>
+                </div>
+                <div class="m4-chart-footer">
+                    <span class="m4-chart-label">Feature Importance Ranking Bar Chart</span>
+                    <a href="{{ m5_data.image_urls.feature_importance }}" target="_blank" rel="noopener" class="m4-direct-link" title="Open full resolution">↗ Full Res</a>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card">
+                <h3 style="font-size: 1.15rem; margin-bottom: 0.75rem;">Relative Feature Importances</h3>
+                <p class="muted" style="line-height: 1.6; margin-bottom: 1rem;">
+                    Both impurity decrease (Entropy) and 5-repeat permutation testing identify <strong>AC_POWER</strong>, <strong>SOURCE_KEY</strong>, and temporal intervals as dominant predictors for DC output tier classification.
+                </p>
+
+                {% if m5_data.feature_importance %}
+                <div style="overflow-x: auto;">
+                    <table class="data-table" style="font-size: 0.85rem;">
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>Tree Importance</th>
+                                <th>Permutation Mean</th>
+                                <th>Visual Impact</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for f in m5_data.feature_importance %}
+                            <tr>
+                                <td><strong>{{ f.feature }}</strong></td>
+                                <td>{{ f.tree_importance }}</td>
+                                <td>{{ f.perm_mean }}</td>
+                                <td style="min-width: 120px;">
+                                    <div class="m4-acc-bar-track" style="margin: 0; height: 8px;">
+                                        <div class="m4-acc-bar-fill" style="width: {{ f.tree_pct }}%;"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- SECTION 3: Complete Performance Results Matrix -->
+    <!-- ============================================== -->
+    <section class="m4-section">
+        <div class="section-header-flex">
+            <h2>📈 Comprehensive Metric Score Matrix</h2>
+            <span class="table-meta-badge">All 17 Performance Metrics</span>
+        </div>
+
+        <div class="card" style="overflow-x: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Metric Category</th>
+                        <th>Metric Name</th>
+                        <th>Raw Score</th>
+                        <th>Normalized Percentage</th>
+                        <th>Evaluation Perspective</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m_name, vals in m5_data.performance.items() %}
+                    <tr>
+                        <td>
+                            {% if 'Outlier' in m_name or 'Normal' in m_name or 'Sensitivity' in m_name %}
+                            <span class="badge badge-warning">Robustness</span>
+                            {% elif 'RMSE' in m_name or 'MAE' in m_name or 'MAPE' in m_name or 'R2' in m_name %}
+                            <span class="badge badge-info">Continuous / Regr</span>
+                            {% else %}
+                            <span class="badge badge-success">Classification</span>
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ m_name }}</strong></td>
+                        <td><code>{{ vals.score }}</code></td>
+                        <td>
+                            {% if vals.pct != 'N/A' and vals.pct is number and vals.pct >= 0 and vals.pct <= 100 %}
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span>{{ vals.pct }}%</span>
+                                <div class="m4-acc-bar-track" style="margin: 0; height: 6px; width: 60px;">
+                                    <div class="m4-acc-bar-fill" style="width: {{ vals.pct }}%;"></div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <span class="muted">{{ vals.pct }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="muted" style="font-size: 0.85rem;">
+                            {% if m_name == 'Accuracy' %}Overall proportion of correct classifications
+                            {% elif m_name == 'Precision' %}Weighted positive predictive value
+                            {% elif m_name == 'Recall' %}Weighted sensitivity across all classes
+                            {% elif m_name == 'F1 Score' %}Balanced harmonic mean
+                            {% elif m_name == 'ROC-AUC' %}Area under receiver operating characteristic curve
+                            {% elif m_name == 'PR-AUC' %}Precision-recall area under curve
+                            {% elif m_name == 'RMSE' %}Root mean squared continuous error
+                            {% elif m_name == 'MAE' %}Mean absolute error
+                            {% elif m_name == 'MAPE (%)' %}Mean absolute percentage error
+                            {% elif m_name == 'P-Square (R2)' %}Coefficient of determination
+                            {% elif 'Outlier' in m_name %}Performance strictly on outlier subpopulation
+                            {% elif 'Normal' in m_name %}Performance on inlier core subpopulation
+                            {% else %}Comparative delta
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- SECTION 4: Outlier Sensitivity Analysis        -->
+    <!-- ============================================== -->
+    <section class="m4-section">
+        <div class="section-header-flex">
+            <h2>🧪 Outlier Sensitivity &amp; Robustness Analysis</h2>
+            <span class="table-meta-badge">Sensor Noise Resilience</span>
+        </div>
+
+        <div class="grid-2-col">
+            {% if m5_data.image_urls.outlier_sensitivity %}
+            <div class="card m4-chart-card">
+                <div class="m4-chart-thumb-wrap m4-lightbox-trigger" data-url="{{ m5_data.image_urls.outlier_sensitivity }}" data-title="Outlier vs Normal F1 Sensitivity Comparison">
+                    <img src="{{ m5_data.image_urls.outlier_sensitivity }}" alt="Outlier vs Normal Sensitivity" loading="lazy" class="m4-chart-img">
+                    <div class="m4-chart-overlay"><span>🔍 Zoom &amp; Pan</span></div>
+                </div>
+                <div class="m4-chart-footer">
+                    <span class="m4-chart-label">Outlier vs Normal Subpopulation Sensitivity</span>
+                    <a href="{{ m5_data.image_urls.outlier_sensitivity }}" target="_blank" rel="noopener" class="m4-direct-link" title="Open full resolution">↗ Full Res</a>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card">
+                <h3 style="font-size: 1.15rem; margin-bottom: 0.75rem;">Subpopulation Comparison</h3>
+                <p class="muted" style="line-height: 1.6; margin-bottom: 1rem;">
+                    Identifies IQR-based sensor telemetry outliers and evaluates model degradation when predicting high-variance outlier rows versus steady-state normal telemetry.
+                </p>
+
+                {% if m5_data.outlier_sensitivity %}
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    {% for g in m5_data.outlier_sensitivity %}
+                    <div class="card p-3" style="background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.08);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <strong>{{ g.group }} Telemetry</strong>
+                            <span class="badge badge-info">{{ "{:,.0f}".format(g.count) }} samples</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                            <span>Precision: <strong>{{ g.precision }}%</strong></span>
+                            <span>Recall: <strong>{{ g.recall }}%</strong></span>
+                            <span>F1: <strong class="text-emerald">{{ g.f1 }}%</strong></span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="card mt-3 p-3" style="background: rgba(59, 130, 246, 0.08); border-color: rgba(59, 130, 246, 0.25);">
+                    <div style="font-size: 0.85rem; font-weight: 600; color: #60a5fa;">SENSITIVITY DIFFERENCE (Normal F1 - Outlier F1)</div>
+                    <div style="font-size: 1.25rem; font-weight: 700; margin-top: 0.25rem;">
+                        {{ m5_data.performance.get('Outlier Sensitivity Difference', {}).get('score', '-0.0002') }}
+                    </div>
+                    <span class="muted" style="font-size: 0.8rem;">Near-zero delta verifies tree robustness under anomalous conditions.</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- SECTION 5: Model Specs & Dataset Details       -->
+    <!-- ============================================== -->
+    <section class="m4-section">
+        <div class="section-header-flex">
+            <h2>⚙️ Model Details &amp; Execution Metadata</h2>
+            <span class="table-meta-badge">Hyperparameters</span>
+        </div>
+
+        <div class="grid-2-col">
+            <div class="card">
+                <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">Model Specifications</h3>
+                <div style="overflow-x: auto;">
+                    <table class="data-table" style="font-size: 0.85rem;">
+                        <tbody>
+                            {% for item in m5_data.model_details %}
+                            <tr>
+                                <td><strong>{{ item.Parameter }}</strong></td>
+                                <td>{{ item.Value }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">Dataset &amp; CV Partitioning</h3>
+                <div style="overflow-x: auto;">
+                    <table class="data-table" style="font-size: 0.85rem;">
+                        <tbody>
+                            {% for item in m5_data.dataset_info %}
+                            <tr>
+                                <td><strong>{{ item.Parameter }}</strong></td>
+                                <td>{{ item.Value }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- SECTION 6: Full Classification Report Console  -->
+    <!-- ============================================== -->
+    {% if m5_data.classification_report %}
+    <section class="m4-section">
+        <div class="section-header-flex">
+            <h2>🖥️ Scikit-Learn Classification Report</h2>
+            <span class="table-meta-badge">Raw Terminal Output</span>
+        </div>
+        <div class="card" style="background: #0b0f19; border: 1px solid rgba(255,255,255,0.1); padding: 1.25rem;">
+            <pre style="font-family: 'Fira Code', 'Courier New', monospace; font-size: 0.9rem; color: #38bdf8; margin: 0; line-height: 1.6; overflow-x: auto;">{{ m5_data.classification_report }}</pre>
+        </div>
+    </section>
+    {% endif %}
+</div>
+
+<!-- Lightbox Modal for Fullscreen Chart Inspection -->
+<div id="m4-lightbox-modal" class="m4-lightbox-backdrop" aria-hidden="true" style="display: none;">
+    <div class="m4-lightbox-content">
+        <div class="m4-lightbox-header">
+            <span id="m4-lightbox-title" class="m4-lightbox-title">Chart Preview</span>
+            <div class="m4-lightbox-actions">
+                <a id="m4-lightbox-download" href="#" target="_blank" rel="noopener" class="m4-btn-action" title="Open full resolution">↗ Open Original</a>
+                <button id="m4-lightbox-close" class="m4-btn-close" aria-label="Close">✕</button>
+            </div>
+        </div>
+        <div class="m4-lightbox-body">
+            <img id="m4-lightbox-image" src="" alt="Fullscreen Chart">
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const triggers = document.querySelectorAll(".m4-lightbox-trigger");
+    const modal = document.getElementById("m4-lightbox-modal");
+    const modalImg = document.getElementById("m4-lightbox-image");
+    const modalTitle = document.getElementById("m4-lightbox-title");
+    const modalDownload = document.getElementById("m4-lightbox-download");
+    const modalClose = document.getElementById("m4-lightbox-close");
+
+    if (modal) {
+        triggers.forEach(t => {
+            t.addEventListener("click", () => {
+                const url = t.getAttribute("data-url");
+                const title = t.getAttribute("data-title") || "Chart Preview";
+                modalImg.src = url;
+                modalTitle.textContent = title;
+                modalDownload.href = url;
+                modal.style.display = "flex";
+                modal.setAttribute("aria-hidden", "false");
+            });
+        });
+
+        const closeModal = () => {
+            modal.style.display = "none";
+            modal.setAttribute("aria-hidden", "true");
+            modalImg.src = "";
+        };
+
+        modalClose.addEventListener("click", closeModal);
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal) closeModal();
+        });
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && modal.style.display === "flex") closeModal();
+        });
+    }
+});
+</script>
+{% endblock %}

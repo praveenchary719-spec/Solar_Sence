@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}About - Solar Sense{% endblock %}
+
+{% block content %}
+
+<div class="page">
+    <div class="page-header">
+        <h1>About Solar Sense</h1>
+        <p class="page-subtitle">Pioneering clean energy intelligence through machine learning, telemetry analysis, and automated feature engineering.</p>
+    </div>
+
+    <div class="card about-intro-card">
+        <h3>☀️ Project Mission & Overview</h3>
+        <p>
+            Solar Sense is an intelligent analytics platform designed to analyze industrial solar power generation data, detect environmental correlation patterns, and forecast clean energy production with mathematical precision.
+        </p>
+        <p>
+            By bridging meteorological telemetry with advanced machine learning algorithms, the platform empowers plant operators, energy engineers, and grid managers to optimize clean power dispatch and maintain grid stability.
+        </p>
+    </div>
+
+    <div class="section-header-flex">
+        <h2>Core Objectives</h2>
+        <span class="table-meta-badge">System Deliverables</span>
+    </div>
+    <div class="card objectives-card">
+        <ul class="objective-list">
+            <li><strong>Environmental Telemetry Analysis:</strong> Measure and model real-time solar irradiation, ambient air temperature, and module surface thermals.</li>
+            <li><strong>Pattern Recognition:</strong> Discover diurnal cyclical patterns and power degradation signatures across solar PV inverters.</li>
+            <li><strong>Predictive Power Output:</strong> Calibrate regression models to forecast DC Power output from input ambient parameters.</li>
+            <li><strong>Feature Engineering:</strong> Automate statistical imputation, categorical encodings, and numerical scaling across raw CSV data streams.</li>
+            <li><strong>Renewable Optimization:</strong> Provide actionable operational reports supporting net-zero energy integration.</li>
+        </ul>
+    </div>
+
+    <div class="section-header-flex">
+        <h2>Engineering Tech Stack</h2>
+        <span class="table-meta-badge">Modern Software Architecture</span>
+    </div>
+    <div class="card tech-card">
+        <div class="tech-grid">
+            <div class="tech-item"><span class="tech-icon">🐍</span><strong>Python 3</strong><small>Core Engine</small></div>
+            <div class="tech-item"><span class="tech-icon">🌶️</span><strong>Flask</strong><small>Web Framework</small></div>
+            <div class="tech-item"><span class="tech-icon">🐼</span><strong>Pandas</strong><small>Dataframes</small></div>
+            <div class="tech-item"><span class="tech-icon">🔢</span><strong>NumPy</strong><small>Linear Algebra</small></div>
+            <div class="tech-item"><span class="tech-icon">🧠</span><strong>Scikit-Learn</strong><small>Machine Learning</small></div>
+            <div class="tech-item"><span class="tech-icon">📈</span><strong>Matplotlib/Seaborn</strong><small>Data Viz</small></div>
+            <div class="tech-item"><span class="tech-icon">🎨</span><strong>Modern CSS</strong><small>Executive Glass</small></div>
+            <div class="tech-item"><span class="tech-icon">⚡</span><strong>Jinja2</strong><small>Server Templates</small></div>
+        </div>
+    </div>
+
+    <div class="section-header-flex">
+        <h2>Telemetry Data Source Profile</h2>
+        <span class="table-meta-badge">Plant Ingestion Specs</span>
+    </div>
+    <div class="card dataset-details-card">
+        <div class="details-grid">
+            <div class="detail-item">
+                <span class="detail-label">Raw Dataset Source</span>
+                <span class="detail-value filename">{{ raw_dataset.name }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Verified Record Count</span>
+                <span class="detail-value">{{ raw_dataset.rows }} telemetry records</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Feature Dimensions</span>
+                <span class="detail-value">{{ raw_dataset.columns }} sensor variables</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

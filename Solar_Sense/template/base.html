@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Solar Sense — AI Telemetry & Predictive Analytics{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=8">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Ambient Soothing Light Glow Orbs -->
+    <div class="ambient-background" aria-hidden="true">
+        <div class="ambient-orb orb-amber"></div>
+        <div class="ambient-orb orb-cyan"></div>
+        <div class="ambient-orb orb-emerald"></div>
+        <div class="ambient-mesh"></div>
+    </div>
+
+    <!-- Mobile Top Bar (Responsive Toggle) -->
+    <header class="mobile-navbar">
+        <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle Navigation Menu">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </button>
+        <div class="mobile-brand">
+            <span class="core-mini">☀️</span>
+            <span class="brand-text">SOLAR SENSE</span>
+        </div>
+        <a href="{{ url_for('prediction') }}" class="mobile-action-pill">⚡ Predict</a>
+    </header>
+
+    <!-- Backdrop for Mobile Sidebar Drawer -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <div class="app-layout">
+        <!-- Modern Left Sidebar Navigation Bar -->
+        <aside class="app-sidebar" id="appSidebar">
+            <!-- Sidebar Header & Brand -->
+            <div class="sidebar-header">
+                <a href="{{ url_for('home') }}" class="brand-link">
+                    <div class="brand-reactor">
+                        <span class="reactor-core">☀️</span>
+                        <span class="reactor-ring"></span>
+                        <span class="reactor-glow"></span>
+                    </div>
+                    <div class="brand-details">
+                        <span class="brand-title">SOLAR SENSE</span>
+                        <span class="brand-subtitle">Telemetry Intelligence</span>
+                    </div>
+                </a>
+                <div class="system-status-indicator">
+                    <span class="pulse-dot"></span>
+                    <span class="status-text">SYSTEM ONLINE</span>
+                </div>
+            </div>
+
+            <!-- Active Dataset Quick Widget -->
+            <div class="sidebar-dataset-widget">
+                <div class="widget-header">
+                    <span class="widget-label">ACTIVE TELEMETRY SOURCE</span>
+                    <a href="{{ url_for('dataset') }}" class="widget-switch-link" title="Change Dataset">Switch ↗</a>
+                </div>
+                <div class="widget-content">
+                    <span class="dataset-file-icon">📁</span>
+                    <span class="dataset-name" title="{{ active_dataset_name }}">{{ active_dataset_name }}</span>
+                </div>
+            </div>
+
+            <!-- Sidebar Navigation Links Grouped -->
+            <nav class="sidebar-nav">
+                <!-- Group 1: Core Telemetry -->
+                <div class="nav-group">
+                    <span class="nav-group-title">CORE TELEMETRY</span>
+                    <ul class="nav-list">
+                        <li class="nav-item">
+                            <a href="{{ url_for('home') }}" class="nav-link" data-path="/">
+                                <span class="nav-icon">⚡</span>
+                                <span class="nav-label">Home Overview</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('dashboard') }}" class="nav-link" data-path="/dashboard">
+                                <span class="nav-icon">📊</span>
+                                <span class="nav-label">Live Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('visualization') }}" class="nav-link" data-path="/visualization">
+                                <span class="nav-icon">📈</span>
+                                <span class="nav-label">Visualizations</span>
+                                <span class="nav-badge highlight">110+</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('prediction') }}" class="nav-link" data-path="/prediction">
+                                <span class="nav-icon">🔮</span>
+                                <span class="nav-label">Power Prediction</span>
+                                <span class="nav-badge ai">AI</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Group 2: Data & Pipelines -->
+                <div class="nav-group">
+                    <span class="nav-group-title">DATA & PIPELINES</span>
+                    <ul class="nav-list">
+                        <li class="nav-item">
+                            <a href="{{ url_for('dataset') }}" class="nav-link" data-path="/dataset">
+                                <span class="nav-icon">📁</span>
+                                <span class="nav-label">Dataset & Ingestion</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('preprocessing') }}" class="nav-link" data-path="/preprocessing">
+                                <span class="nav-icon">⚙️</span>
+                                <span class="nav-label">Preprocessing Dashboard</span>
+                                <span class="nav-badge clean">Clean</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('models') }}" class="nav-link" data-path="/models">
+                                <span class="nav-icon">🧠</span>
+                                <span class="nav-label">ML Model Zoo</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('regression_models') }}" class="nav-link" data-path="/regression-models">
+                                <span class="nav-icon">📈</span>
+                                <span class="nav-label">Regression Suite</span>
+                                <span class="nav-badge clean">M2</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('ensemble_models') }}" class="nav-link" data-path="/ensemble-models">
+                                <span class="nav-icon">🌲</span>
+                                <span class="nav-label">Ensemble Models</span>
+                                <span class="nav-badge highlight">M3</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('clustering') }}" class="nav-link" data-path="/clustering">
+                                <span class="nav-icon">🔮</span>
+                                <span class="nav-label">K-Means Clustering</span>
+                                <span class="nav-badge ai">M4</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('advanced_analysis') }}" class="nav-link" data-path="/advanced-analysis">
+                                <span class="nav-icon">🌌</span>
+                                <span class="nav-label">PCA, t-SNE & DBSCAN</span>
+                                <span class="nav-badge ai">M4+</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('cv_metrics') }}" class="nav-link" data-path="/cv-metrics">
+                                <span class="nav-icon">🎯</span>
+                                <span class="nav-label">CV Decision Tree</span>
+                                <span class="nav-badge highlight">M5</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('reports') }}" class="nav-link" data-path="/reports">
+                                <span class="nav-icon">📑</span>
+                                <span class="nav-label">Statistical Reports</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Group 3: System & Info -->
+                <div class="nav-group">
+                    <span class="nav-group-title">PLATFORM & SUPPORT</span>
+                    <ul class="nav-list">
+                        <li class="nav-item">
+                            <a href="{{ url_for('about') }}" class="nav-link" data-path="/about">
+                                <span class="nav-icon">✦</span>
+                                <span class="nav-label">About Solar Sense</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('contact') }}" class="nav-link" data-path="/contact">
+                                <span class="nav-icon">✉️</span>
+                                <span class="nav-label">Contact Engineering</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Sidebar Telemetry Bottom Card -->
+            <div class="sidebar-telemetry-card">
+                <div class="telemetry-row">
+                    <span class="telemetry-label">FACILITY:</span>
+                    <strong class="telemetry-val">Plant-01 Cluster</strong>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">RESOLUTION:</span>
+                    <strong class="telemetry-val">15-Min Scada</strong>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">DIURNAL FLUX:</span>
+                    <strong class="telemetry-val time-ticker" id="sidebarClock">SYNCING...</strong>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area on the Right of Sidebar -->
+        <div class="main-wrapper">
+            <!-- Command Topbar / HUD Ribbon -->
+            <header class="main-topbar">
+                <div class="topbar-left">
+                    <div class="topbar-status-chip">
+                        <span class="status-pulse-dot"></span>
+                        <span class="chip-text">TELEMETRY LINK: <strong>ONLINE & SYNCHRONIZED</strong></span>
+                    </div>
+                    <span class="topbar-divider">/</span>
+                    <div class="topbar-dataset-chip">
+                        <span class="dataset-dot"></span>
+                        <span class="chip-text">DATASET: <strong>{{ active_dataset_name }}</strong></span>
+                    </div>
+                </div>
+
+                <div class="topbar-right">
+                    <div class="hud-clock" id="hudClock">
+                        <span class="clock-icon">⏱️</span>
+                        <span class="clock-text" id="hudTimeDisplay">LIVE SYNC</span>
+                    </div>
+                    <a href="{{ url_for('prediction') }}" class="btn-topbar primary">
+                        <span>⚡ Predict Power</span>
+                    </a>
+                    <a href="{{ url_for('visualization') }}" class="btn-topbar secondary">
+                        <span>📈 110+ Charts</span>
+                    </a>
+                </div>
+            </header>
+
+            <!-- Main Page Content Slot -->
+            <main class="page-content-wrapper">
+                {% block content %}
+                {% endblock %}
+            </main>
+
+            <!-- Cyber Minimal Footer -->
+            <footer class="app-footer">
+                <div class="footer-inner">
+                    <div class="footer-left">
+                        <div class="footer-brand-title">☀️ SOLAR SENSE PLATFORM</div>
+                        <p class="footer-brand-desc">Industrial Solar Photovoltaic Telemetry, Multi-Stage Automated Preprocessing & Real-Time Machine Learning Power Forecasting.</p>
+                    </div>
+                    <div class="footer-right">
+                        <div class="footer-status-pill">
+                            <span class="pill-dot-green"></span> SCADA Ingestion Ready
+                        </div>
+                        <div class="footer-tags">
+                            <span class="tag">Python 3.13</span>
+                            <span class="tag">Flask</span>
+                            <span class="tag">Pandas</span>
+                            <span class="tag">Scikit-Learn</span>
+                            <span class="tag">Glass UI v3.0</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-copyright">
+                    <p>© 2026 Solar Sense Analytics Platform. All telemetry data processed for industrial renewable monitoring.</p>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Core Interactive Scripts -->
+    <script>
+        // High Precision Real-Time Clock
+        function updateClocks() {
+            const now = new Date();
+            const timeStr = now.toTimeString().split(' ')[0] + ' LOCAL';
+            const sidebarClock = document.getElementById('sidebarClock');
+            const hudClock = document.getElementById('hudTimeDisplay');
+            if (sidebarClock) sidebarClock.textContent = timeStr;
+            if (hudClock) hudClock.textContent = timeStr;
+        }
+        updateClocks();
+        setInterval(updateClocks, 1000);
+
+        // Sidebar Active Route Highlighter
+        (function() {
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                const linkHref = link.getAttribute('data-path') || link.getAttribute('href');
+                if (linkHref === '/' && currentPath === '/') {
+                    link.classList.add('active');
+                } else if (linkHref !== '/' && (currentPath === linkHref || currentPath.startsWith(linkHref))) {
+                    link.classList.add('active');
+                }
+            });
+        })();
+
+        // Mobile Sidebar Drawer Toggle
+        (function() {
+            const toggleBtn = document.getElementById('mobileMenuToggle');
+            const sidebar = document.getElementById('appSidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+
+            if (toggleBtn && sidebar && backdrop) {
+                toggleBtn.addEventListener('click', function() {
+                    sidebar.classList.toggle('open');
+                    backdrop.classList.toggle('open');
+                    toggleBtn.classList.toggle('active');
+                    document.body.classList.toggle('sidebar-locked');
+                });
+
+                backdrop.addEventListener('click', function() {
+                    sidebar.classList.remove('open');
+                    backdrop.classList.remove('open');
+                    toggleBtn.classList.remove('active');
+                    document.body.classList.remove('sidebar-locked');
+                });
+            }
+        })();
+    </script>
+</body>
+
+</html>

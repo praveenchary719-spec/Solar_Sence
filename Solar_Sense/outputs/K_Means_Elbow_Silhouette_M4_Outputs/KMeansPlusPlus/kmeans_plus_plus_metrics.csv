@@ -1,0 +1,2 @@
+Method,Number_of_Clusters,Inertia,Silhouette_Score,Calinski_Harabasz_Score,Davies_Bouldin_Score
+K-Means++,3,62779.36335364325,0.5841362098357785,116290.03332115129,0.6196116506238096

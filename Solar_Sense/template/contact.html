@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Contact - Solar Sense{% endblock %}
+
+{% block content %}
+
+<div class="page">
+    <div class="page-header">
+        <h1>Contact Engineering Team</h1>
+        <p class="page-subtitle">Inquire about model deployments, telemetry integrations, API endpoints, or collaborative research.</p>
+    </div>
+
+    <div class="contact-layout">
+        <div class="contact-info-panel">
+            <div class="card contact-card">
+                <h3>⚡ Project Headquarters</h3>
+                <p>Solar Sense Engineering & Analytics Division</p>
+                <div class="contact-badge-list">
+                    <div class="contact-item">
+                        <span class="contact-icon">📍</span>
+                        <div>
+                            <strong>Location</strong>
+                            <p class="muted">Renewable Energy Systems Lab</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <span class="contact-icon">📧</span>
+                        <div>
+                            <strong>Engineering Inquiries</strong>
+                            <p class="muted">support@solarsense.energy</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <span class="contact-icon">⏱️</span>
+                        <div>
+                            <strong>Telemetry SLA</strong>
+                            <p class="muted">24/7 Real-Time Inference</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="contact-form-panel">
+            <div class="card form-container-card">
+                <h3>Send a Message</h3>
+                <form class="contact-form">
+                    <div class="form-group">
+                        <label for="contact-name">Full Name</label>
+                        <input type="text" id="contact-name" placeholder="e.g. Dr. Alex Morgan" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contact-email">Email Address</label>
+                        <input type="email" id="contact-email" placeholder="e.g. alex.morgan@domain.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contact-message">Message or Technical Inquiry</label>
+                        <textarea id="contact-message" rows="5" placeholder="Specify your dataset inquiry, telemetry query, or feature request..." required></textarea>
+                    </div>
+
+                    <button type="button" class="btn" style="width: 100%;">
+                        <span>Send Message</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

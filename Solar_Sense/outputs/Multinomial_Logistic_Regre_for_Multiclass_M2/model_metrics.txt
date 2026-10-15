@@ -1,0 +1,33 @@
+MULTINOMIAL LOGISTIC REGRESSION RESULTS
+===========================================================================
+
+Dataset: E:\Apps\pythonProject\Solar_Sense\dataset\final_preprocess_M2.csv
+Target: DC_POWER_Tier
+Number of classes: 3
+
+CLASS MAPPING
+----------------------------------------
+0 = High
+1 = Low
+2 = Medium
+
+MODEL PERFORMANCE
+----------------------------------------
+Accuracy: 0.9425
+Accuracy (%): 94.25%
+Precision: 0.9437
+Recall: 0.9425
+F1 Score: 0.9403
+Cross-Entropy Loss: 0.1922
+
+CLASSIFICATION REPORT
+----------------------------------------
+              precision    recall  f1-score   support
+
+        High       0.98      0.97      0.98      4677
+         Low       0.92      1.00      0.95      6390
+      Medium       0.94      0.76      0.84      2688
+
+    accuracy                           0.94     13755
+   macro avg       0.95      0.91      0.92     13755
+weighted avg       0.94      0.94      0.94     13755

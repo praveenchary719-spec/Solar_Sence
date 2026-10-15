@@ -1,0 +1,615 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Solar Sense{% endblock %}
+
+{% block content %}
+
+<section class="hero">
+    <div class="hero-badge">✦ AI-POWERED SOLAR ENERGY ANALYTICS</div>
+    <h1>Solar Sense</h1>
+    <h2>Precision Telemetry Analysis & Machine Learning Forecasting</h2>
+    <p>
+        Harness advanced mathematical modeling and sensor telemetry across solar irradiation, module temperature, and meteorological conditions to accurately predict and optimize plant-scale DC power generation.
+    </p>
+    <div class="buttons">
+        <a href="{{ url_for('prediction') }}" class="btn">⚡ Start Live Prediction</a>
+        <a href="{{ url_for('dashboard') }}" class="btn secondary">📊 Explore Dashboard</a>
+    </div>
+</section>
+
+<!-- ════════════════ Live Telemetry Snapshot ════════════════ -->
+<section class="section">
+    <div class="section-header-flex">
+        <h2>Live Telemetry Snapshot</h2>
+        <span class="table-meta-badge">Real-Time Ingestion</span>
+    </div>
+    <div class="cards stats">
+        {% for item in dashboard_stats %}
+        <div class="card">
+            <h3>{{ item.label }}</h3>
+            <div class="stat-value">{{ item.value }}</div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- ════════════════ Algorithm Performance Comparison ════════════════ -->
+{% if overview and overview.algorithm_performance %}
+<section class="section">
+    <div class="section-header-flex">
+        <h2>📊 Comprehensive Algorithm Performance</h2>
+        <span class="table-meta-badge">{{ overview.algorithm_performance | length }} Algorithms Evaluated</span>
+    </div>
+    <p class="muted" style="margin-bottom: 18px;">Interactive comparison of primary metric scores across all implemented machine learning algorithms spanning regression, classification, clustering, dimensionality reduction, and cross-validated evaluation pipelines.</p>
+
+    <!-- Performance Chart -->
+    <div class="card" style="padding: 24px;">
+        <h3 style="margin-bottom: 16px;">🏆 Primary Metric Score — All Algorithms</h3>
+        <p class="muted" style="margin-bottom: 14px;">Compares the primary evaluation metric for each algorithm. Regression models use R², classification uses Accuracy, and clustering uses Silhouette Score. Higher is better for all displayed metrics.</p>
+        <div style="position: relative; width: 100%; height: 420px;">
+            <canvas id="perfChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Algorithm Category Breakdown -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+        <div class="card" style="padding: 24px;">
+            <h3 style="margin-bottom: 16px;">📈 Algorithm Category Distribution</h3>
+            <p class="muted" style="margin-bottom: 14px;">Breakdown of algorithms by their machine learning paradigm — showing coverage across supervised regression, supervised classification, unsupervised clustering, dimensionality reduction, and cross-validation evaluation.</p>
+            <div style="position: relative; width: 100%; max-width: 340px; margin: 0 auto; height: 300px;">
+                <canvas id="categoryPieChart"></canvas>
+            </div>
+        </div>
+        <div class="card" style="padding: 24px;">
+            <h3 style="margin-bottom: 16px;">📦 Algorithms Per Module</h3>
+            <p class="muted" style="margin-bottom: 14px;">Each module groups related algorithms: M2 (Regression Suite), M3 (Ensemble Classifiers), M4 (Unsupervised Analysis), M5 (Cross-Validation), M6 (Gradient Boosting). This chart shows how many algorithms exist in each module.</p>
+            <div style="position: relative; width: 100%; height: 300px;">
+                <canvas id="moduleBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════════ Detailed Algorithm Report Cards ════════════════ -->
+<section class="section">
+    <div class="section-header-flex">
+        <h2>🔬 Algorithm-by-Algorithm Breakdown</h2>
+        <span class="table-meta-badge">Full Performance Audit</span>
+    </div>
+    <p class="muted" style="margin-bottom: 18px;">Every implemented algorithm with its internal mechanism, loss function, hyperparameters, and three-tier evaluation metrics. Click any card to see the detailed dedicated page.</p>
+
+    <div class="cards model-zoo-grid" style="grid-template-columns: 1fr 1fr; gap: 18px;">
+        {% for algo in overview.algorithm_performance %}
+        <div class="card" style="padding: 20px; border-left: 3px solid {% if 'Top Performer' in algo.status %}var(--accent-emerald){% elif algo.status == 'High Accuracy' %}var(--accent-cyan){% elif algo.status == 'Baseline Model' %}var(--accent-amber){% else %}var(--border-subtle){% endif %};">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                <div>
+                    <h3 style="font-size: 0.95rem; margin: 0;">{{ algo.algorithm }}</h3>
+                    <span class="muted" style="font-size: 0.75rem;">{{ algo.module }} · {{ algo.task_type }}</span>
+                </div>
+                <span class="status-badge {% if 'Top Performer' in algo.status %}clean{% elif algo.status == 'High Accuracy' %}highlight{% else %}ai{% endif %}" style="font-size: 0.68rem; white-space: nowrap;">{{ algo.status }}</span>
+            </div>
+            <p class="muted" style="font-size: 0.78rem; line-height: 1.5; margin-bottom: 10px;">
+                <strong>Mechanism:</strong> {{ algo.mechanism[:150] }}{% if algo.mechanism|length > 150 %}…{% endif %}
+            </p>
+            <p class="muted" style="font-size: 0.78rem; margin-bottom: 10px;">
+                <strong>Loss:</strong> {{ algo.loss_function[:100] }}{% if algo.loss_function|length > 100 %}…{% endif %}
+            </p>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px;">
+                <div style="background: var(--bg-card-alt, rgba(255,255,255,0.03)); border-radius: 8px; padding: 8px 12px; flex: 1; min-width: 120px;">
+                    <span class="muted" style="font-size: 0.68rem; display: block;">{{ algo.primary_metric }}</span>
+                    <strong style="font-size: 1.05rem; color: var(--accent-cyan);">{{ algo.primary_value }}</strong>
+                </div>
+                {% if algo.secondary_metric and algo.secondary_metric != 'nan' %}
+                <div style="background: var(--bg-card-alt, rgba(255,255,255,0.03)); border-radius: 8px; padding: 8px 12px; flex: 1; min-width: 120px;">
+                    <span class="muted" style="font-size: 0.68rem; display: block;">{{ algo.secondary_metric }}</span>
+                    <strong style="font-size: 1.05rem;">{{ algo.secondary_value }}</strong>
+                </div>
+                {% endif %}
+                {% if algo.tertiary_metric and algo.tertiary_metric != 'nan' %}
+                <div style="background: var(--bg-card-alt, rgba(255,255,255,0.03)); border-radius: 8px; padding: 8px 12px; flex: 1; min-width: 120px;">
+                    <span class="muted" style="font-size: 0.68rem; display: block;">{{ algo.tertiary_metric }}</span>
+                    <strong style="font-size: 1.05rem;">{{ algo.tertiary_value }}</strong>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- ════════════════ Preprocessing Pipeline Visualization ════════════════ -->
+<section class="section">
+    <div class="section-header-flex">
+        <h2>⚙️ Preprocessing & Feature Engineering Pipeline</h2>
+        <span class="table-meta-badge">{{ clean_datasets | length }} Feature Datasets</span>
+    </div>
+    <p class="muted" style="margin-bottom: 18px;">Visual breakdown of each preprocessing step — encoding schemes (Label, Ordinal, One-Hot, Target, Embedding), scaling methods (StandardScaler, MinMaxScaler, Normalizer), and imputation strategies (Deletion, Mean, Median, Model-Based) — along with their impact on dataset dimensionality.</p>
+
+    {% if overview and overview.preprocessing_pipeline %}
+    <div class="card" style="padding: 24px; margin-bottom: 20px;">
+        <h3 style="margin-bottom: 16px;">📐 Dataset Dimensionality After Each Preprocessing Step</h3>
+        <p class="muted" style="margin-bottom: 14px;">Shows how the number of columns (features) changes through each preprocessing variant. One-Hot Encoding typically expands feature count, while other methods preserve or reduce it.</p>
+        <div style="position: relative; width: 100%; height: 340px;">
+            <canvas id="preprocessChart"></canvas>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="file-list">
+        {% for item in overview.preprocessing_pipeline if overview %}
+        <div class="file-item" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h3>{{ item.title }}</h3>
+                <p class="muted">{{ item.description }}</p>
+                {% if item.available %}
+                <p>{{ item.rows | default(0) }} rows · {{ item.columns | default(0) }} columns</p>
+                {% else %}
+                <p class="muted">⚠️ Dataset not yet generated</p>
+                {% endif %}
+            </div>
+            <span class="status-badge {% if item.available %}clean{% else %}ai{% endif %}" style="white-space: nowrap;">
+                {% if item.available %}✅ Ready{% else %}⏳ Pending{% endif %}
+            </span>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- ════════════════ Hierarchical Clustering & Dendrogram ════════════════ -->
+{% if overview and overview.hierarchical_clustering %}
+<section class="section">
+    <div class="section-header-flex">
+        <h2>🌿 Hierarchical Clustering & Dendrogram Analysis</h2>
+        <span class="table-meta-badge">Agglomerative Ward Linkage</span>
+    </div>
+    <p class="muted" style="margin-bottom: 18px;">Bottom-up agglomerative clustering using Ward's minimum variance linkage criterion. The dendrogram shows how individual data points merge into clusters at different distance thresholds, revealing 3 major operational regimes in the solar generation data.</p>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+        <div class="card" style="padding: 24px;">
+            <h3 style="margin-bottom: 16px;">📊 Cluster Quality Metrics</h3>
+            <p class="muted" style="margin-bottom: 14px;">Silhouette Score measures cluster cohesion vs separation (-1 to 1, higher is better). Calinski-Harabasz is the ratio of between-cluster to within-cluster dispersion. Davies-Bouldin measures cluster similarity (lower is better).</p>
+            <div style="position: relative; width: 100%; height: 260px;">
+                <canvas id="hierMetricsChart"></canvas>
+            </div>
+        </div>
+        <div class="card" style="padding: 24px;">
+            <h3 style="margin-bottom: 16px;">🔢 Metric Values</h3>
+            <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 10px;">
+                {% if overview.hierarchical_clustering.get('Silhouette') %}
+                <div style="background: var(--bg-card-alt, rgba(255,255,255,0.03)); border-radius: 10px; padding: 14px 18px;">
+                    <span class="muted" style="font-size: 0.75rem; display: block;">Silhouette Score</span>
+                    <strong style="font-size: 1.4rem; color: var(--accent-cyan);">{{ overview.hierarchical_clustering.Silhouette }}</strong>
+                    <p class="muted" style="font-size: 0.72rem; margin-top: 4px;">Measures how similar a point is to its own cluster vs nearest neighbor cluster. Range: -1 to 1.</p>
+                </div>
+                {% endif %}
+                {% if overview.hierarchical_clustering.get('Calinski_Harabasz') %}
+                <div style="background: var(--bg-card-alt, rgba(255,255,255,0.03)); border-radius: 10px; padding: 14px 18px;">
+                    <span class="muted" style="font-size: 0.75rem; display: block;">Calinski-Harabasz Index</span>
+                    <strong style="font-size: 1.4rem; color: var(--accent-amber);">{{ overview.hierarchical_clustering.Calinski_Harabasz }}</strong>
+                    <p class="muted" style="font-size: 0.72rem; margin-top: 4px;">Variance ratio criterion — higher means denser, well-separated clusters.</p>
+                </div>
+                {% endif %}
+                {% if overview.hierarchical_clustering.get('Davies_Bouldin') %}
+                <div style="background: var(--bg-card-alt, rgba(255,255,255,0.03)); border-radius: 10px; padding: 14px 18px;">
+                    <span class="muted" style="font-size: 0.75rem; display: block;">Davies-Bouldin Index</span>
+                    <strong style="font-size: 1.4rem; color: var(--accent-emerald);">{{ overview.hierarchical_clustering.Davies_Bouldin }}</strong>
+                    <p class="muted" style="font-size: 0.72rem; margin-top: 4px;">Average similarity between clusters — lower means better separation.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if overview.hierarchical_clustering.get('dendrogram_url') %}
+    <div class="card" style="padding: 24px;">
+        <h3 style="margin-bottom: 10px;">🌳 Agglomerative Dendrogram — Ward Linkage</h3>
+        <p class="muted" style="margin-bottom: 14px;">This tree diagram shows the stepwise merging of data points from individual leaves to the root cluster. Horizontal lines represent merge distances — the height at which two sub-clusters combine. A horizontal cut at the optimal threshold reveals 3 natural solar generation regimes (Low Night/Dusk, Medium Transitional, High Peak Daylight).</p>
+        <div style="text-align: center; background: rgba(0,0,0,0.15); border-radius: 12px; padding: 16px; overflow-x: auto;">
+            <img src="{{ overview.hierarchical_clustering.dendrogram_url }}" alt="Agglomerative Dendrogram" style="max-width: 100%; height: auto; border-radius: 8px;">
+        </div>
+    </div>
+    {% endif %}
+</section>
+{% endif %}
+
+<!-- ════════════════ System Architecture Overview ════════════════ -->
+<section class="section">
+    <div class="section-header-flex">
+        <h2>System Architecture Overview</h2>
+        <span class="table-meta-badge">Enterprise Platform</span>
+    </div>
+    <div class="card about-highlight-card">
+        <div class="card-grid-two">
+            <div>
+                <h3>☀️ Intelligent Energy Intelligence</h3>
+                <p>
+                    Solar Sense bridges industrial SCADA solar telemetry with modern predictive analytics. By processing real-world sensor streams from operational photovoltaic plants, the platform identifies power loss anomalies, models temperature degradation curves, and computes expected generation in real time.
+                </p>
+            </div>
+            <div>
+                <h3>⚡ Operator Advantages</h3>
+                <p>
+                    Plant supervisors and grid dispatchers gain immediate visibility into clean datasets, automated preprocessing variants (imputation, scaling, encodings), and reliable regression inferences to optimize solar energy yields.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════════ Module Performance Summary Report ════════════════ -->
+{% if overview and overview.module_summary %}
+<section class="section">
+    <div class="section-header-flex">
+        <h2>📑 Structured Module Performance Reports</h2>
+        <span class="table-meta-badge">Per-Module Summaries</span>
+    </div>
+    <p class="muted" style="margin-bottom: 18px;">Each module groups related algorithms into a cohesive analytical unit. Efficiency reports below show algorithm count, coverage, and top performers per module.</p>
+
+    <div class="cards model-zoo-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+        {% for mod in overview.module_summary %}
+        <div class="card" style="padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3 style="margin: 0; font-size: 0.95rem;">{{ mod.module }}</h3>
+                <span class="status-badge {% if mod.best_status %}clean{% else %}ai{% endif %}" style="font-size: 0.68rem;">{{ mod.count }} Algos</span>
+            </div>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                {% for alg in mod.algorithms %}
+                <li style="font-size: 0.78rem; padding: 3px 0; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary);">
+                    {% if loop.index <= 5 %}• {{ alg[:50] }}{% if alg|length > 50 %}…{% endif %}{% endif %}
+                </li>
+                {% endfor %}
+                {% if mod.algorithms|length > 5 %}
+                <li style="font-size: 0.72rem; color: var(--accent-cyan); padding-top: 4px;">+{{ mod.algorithms|length - 5 }} more</li>
+                {% endif %}
+            </ul>
+            {% if mod.best_status %}
+            <p style="margin-top: 10px; font-size: 0.72rem; color: var(--accent-emerald);">🏆 {{ mod.best_status }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- ════════════════ Workflow & CTA ════════════════ -->
+<section class="section workflow">
+    <h2>End-to-End Operational Workflow</h2>
+    <div class="flow">
+        <span>Raw Solar Data</span>
+        <b>→</b>
+        <span>Automated Preprocessing</span>
+        <b>→</b>
+        <span>ML Modeling</span>
+        <b>→</b>
+        <span>Real-Time Prediction</span>
+        <b>→</b>
+        <span>Actionable Reports</span>
+    </div>
+</section>
+
+<section class="cta">
+    <h2>Ready to Predict Power Generation?</h2>
+    <p>Simulate DC Power output under custom ambient temperature, module surface heat, and solar flux intensity.</p>
+    <a href="{{ url_for('prediction') }}" class="btn">⚡ Start Power Prediction</a>
+</section>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chartFontColor = '#94a3b8';
+    const gridColor = 'rgba(148, 163, 184, 0.08)';
+
+    Chart.defaults.color = chartFontColor;
+    Chart.defaults.font.family = "'Plus Jakarta Sans', 'Space Grotesk', sans-serif";
+    Chart.defaults.font.size = 11;
+
+    // ── Performance Comparison Chart ──
+    {% if overview and overview.algorithm_performance %}
+    (function() {
+        const algos = {{ overview.algorithm_performance | tojson }};
+        const labels = [];
+        const values = [];
+        const colors = [];
+        const palette = [
+            'rgba(59, 130, 246, 0.75)',   // blue
+            'rgba(16, 185, 129, 0.75)',   // emerald
+            'rgba(245, 158, 11, 0.75)',   // amber
+            'rgba(139, 92, 246, 0.75)',   // violet
+            'rgba(236, 72, 153, 0.75)',   // pink
+            'rgba(6, 182, 212, 0.75)',    // cyan
+            'rgba(249, 115, 22, 0.75)',   // orange
+            'rgba(34, 197, 94, 0.75)',    // green
+            'rgba(168, 85, 247, 0.75)',   // purple
+            'rgba(14, 165, 233, 0.75)',   // sky
+        ];
+
+        algos.forEach(function(a, i) {
+            let name = a.algorithm;
+            if (name.length > 35) name = name.substring(0, 33) + '…';
+            labels.push(name);
+
+            let v = parseFloat(a.primary_value);
+            if (isNaN(v)) {
+                // Try to parse percentage strings like "94.2%" or "1.8%"
+                v = parseFloat(a.primary_value.replace('%', ''));
+                if (!isNaN(v)) v = v / 100;
+            }
+            if (isNaN(v)) v = 0;
+            values.push(v);
+            colors.push(palette[i % palette.length]);
+        });
+
+        const ctx = document.getElementById('perfChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Primary Metric Score',
+                        data: values,
+                        backgroundColor: colors,
+                        borderColor: colors.map(c => c.replace('0.75', '1')),
+                        borderWidth: 1,
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    const a = algos[ctx.dataIndex];
+                                    return a.primary_metric + ': ' + a.primary_value;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 1.05,
+                            grid: { color: gridColor },
+                            ticks: { callback: v => (v * 100).toFixed(0) + '%' }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+        }
+    })();
+
+    // ── Category Pie Chart ──
+    (function() {
+        const cats = {{ overview.category_counts | tojson }};
+        const labels = ['Regression', 'Classification', 'Clustering / Anomaly', 'Dimensionality Reduction', 'Evaluation'];
+        const data = [cats.regression, cats.classification, cats.clustering, cats.dimensionality, cats.evaluation];
+        const bgColors = [
+            'rgba(59, 130, 246, 0.8)',
+            'rgba(16, 185, 129, 0.8)',
+            'rgba(245, 158, 11, 0.8)',
+            'rgba(139, 92, 246, 0.8)',
+            'rgba(236, 72, 153, 0.8)',
+        ];
+
+        const ctx = document.getElementById('categoryPieChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: bgColors,
+                        borderColor: 'rgba(15, 23, 42, 0.9)',
+                        borderWidth: 2,
+                        hoverOffset: 8,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '55%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { padding: 12, font: { size: 10 }, usePointStyle: true, pointStyle: 'circle' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    return ctx.label + ': ' + ctx.raw + ' algorithms';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    })();
+
+    // ── Module Bar Chart ──
+    (function() {
+        const modules = {{ overview.module_summary | tojson }};
+        const labels = modules.map(m => m.module);
+        const data = modules.map(m => m.count);
+        const bgColors = [
+            'rgba(6, 182, 212, 0.75)',
+            'rgba(34, 197, 94, 0.75)',
+            'rgba(245, 158, 11, 0.75)',
+            'rgba(139, 92, 246, 0.75)',
+            'rgba(236, 72, 153, 0.75)',
+        ];
+
+        const ctx = document.getElementById('moduleBarChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Algorithms',
+                        data: data,
+                        backgroundColor: bgColors.slice(0, labels.length),
+                        borderRadius: 6,
+                        borderWidth: 0,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { stepSize: 1 } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+    })();
+    {% endif %}
+
+    // ── Preprocessing Feature Expansion Chart ──
+    {% if overview and overview.preprocessing_pipeline %}
+    (function() {
+        const pipeline = {{ overview.preprocessing_pipeline | tojson }};
+        const labels = pipeline.map(p => {
+            let t = p.title;
+            return t.length > 28 ? t.substring(0, 26) + '…' : t;
+        });
+        const cols = pipeline.map(p => p.columns || 0);
+        const rows = pipeline.map(p => p.rows || 0);
+        const bgCols = pipeline.map((p, i) => p.available
+            ? `hsla(${160 + i * 30}, 70%, 55%, 0.7)`
+            : 'rgba(100, 116, 139, 0.3)');
+
+        const ctx = document.getElementById('preprocessChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Features (Columns)',
+                            data: cols,
+                            backgroundColor: bgCols,
+                            borderRadius: 5,
+                            yAxisID: 'y',
+                        },
+                        {
+                            label: 'Records (Rows)',
+                            data: rows,
+                            type: 'line',
+                            borderColor: 'rgba(245, 158, 11, 0.9)',
+                            backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 4,
+                            pointBackgroundColor: 'rgba(245, 158, 11, 1)',
+                            yAxisID: 'y1',
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { padding: 14, usePointStyle: true, pointStyle: 'circle' } },
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            position: 'left',
+                            title: { display: true, text: 'Feature Count', color: chartFontColor },
+                            grid: { color: gridColor },
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                            title: { display: true, text: 'Row Count', color: chartFontColor },
+                            grid: { drawOnChartArea: false },
+                        },
+                        x: { grid: { display: false }, ticks: { font: { size: 9 } } }
+                    }
+                }
+            });
+        }
+    })();
+    {% endif %}
+
+    // ── Hierarchical Clustering Metrics Chart ──
+    {% if overview and overview.hierarchical_clustering %}
+    (function() {
+        const hier = {{ overview.hierarchical_clustering | tojson }};
+        const sil = hier.Silhouette || 0;
+        const ch = hier.Calinski_Harabasz || 0;
+        const db = hier.Davies_Bouldin || 0;
+
+        // Normalized radar for visualization
+        const ctx = document.getElementById('hierMetricsChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Silhouette\n(cohesion)', 'Calinski-Harabasz\n(separation)', 'Davies-Bouldin\n(similarity)'],
+                    datasets: [{
+                        label: 'Hierarchical Clustering',
+                        data: [
+                            Math.min(sil, 1),           // 0-1 range already
+                            Math.min(ch / 500, 1),      // normalize CH to 0-1
+                            Math.min(1 - db / 2, 1),    // invert DB (lower is better)
+                        ],
+                        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                        borderColor: 'rgba(16, 185, 129, 0.8)',
+                        pointBackgroundColor: 'rgba(16, 185, 129, 1)',
+                        pointBorderColor: '#fff',
+                        pointRadius: 5,
+                        borderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    const raw = [sil, ch, db];
+                                    const names = ['Silhouette', 'Calinski-Harabasz', 'Davies-Bouldin'];
+                                    return names[ctx.dataIndex] + ': ' + raw[ctx.dataIndex];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 1,
+                            grid: { color: gridColor },
+                            angleLines: { color: gridColor },
+                            pointLabels: { font: { size: 10 } },
+                            ticks: { display: false },
+                        }
+                    }
+                }
+            });
+        }
+    })();
+    {% endif %}
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,9 @@
+Parameter,Value
+Model,Decision Tree Classifier
+Criterion,Entropy
+Cross Validation,Stratified K-Fold
+Number of Folds,5
+Shuffle,True
+Random State,42
+Number of Features,10
+Number of Classes,4

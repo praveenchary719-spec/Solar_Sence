@@ -1,0 +1,59 @@
+PREPROCESSED SOLAR GENERATION DATASET INFORMATION
+===========================================================================
+
+Dataset file: E:\Apps\pythonProject\Solar_Sense\dataset\final_preprocess_M2.csv
+Rows: 68774
+Columns: 12
+Target column: DC_POWER_Tier
+Number of classes: 3
+
+Column names:
+- DATE_TIME
+- PLANT_ID
+- SOURCE_KEY_GEN
+- DC_POWER
+- AC_POWER
+- DAILY_YIELD
+- TOTAL_YIELD
+- SOURCE_KEY_WEATHER
+- AMBIENT_TEMPERATURE
+- MODULE_TEMPERATURE
+- IRRADIATION
+- DC_POWER_Tier
+
+Data types:
+DATE_TIME                int64
+PLANT_ID               float64
+SOURCE_KEY_GEN           int64
+DC_POWER               float64
+AC_POWER               float64
+DAILY_YIELD            float64
+TOTAL_YIELD            float64
+SOURCE_KEY_WEATHER       int64
+AMBIENT_TEMPERATURE    float64
+MODULE_TEMPERATURE     float64
+IRRADIATION            float64
+DC_POWER_Tier              str
+dtype: object
+
+Missing values:
+DATE_TIME              0
+PLANT_ID               0
+SOURCE_KEY_GEN         0
+DC_POWER               0
+AC_POWER               0
+DAILY_YIELD            0
+TOTAL_YIELD            0
+SOURCE_KEY_WEATHER     0
+AMBIENT_TEMPERATURE    0
+MODULE_TEMPERATURE     0
+IRRADIATION            0
+DC_POWER_Tier          0
+dtype: int64
+
+Class distribution:
+DC_POWER_Tier
+Low       31951
+High      23383
+Medium    13440
+Name: count, dtype: int64

@@ -1,0 +1,817 @@
+{% extends "base.html" %}
+
+{% block title %}Ensemble Classification Models (M3) — Solar Sense{% endblock %}
+
+{% block content %}
+
+<div class="page m3-page">
+    <!-- Hero Header -->
+    <div class="m3-hero-header">
+        <div class="hero-badge">🌲 MODULE 3 — SUPERVISED ENSEMBLE CLASSIFICATION</div>
+        <h1 class="m3-main-title">Decision Trees &amp; Ensemble Classifiers</h1>
+        <p class="m3-subtitle">
+            Compare <strong>Decision Tree</strong>, <strong>Random Forest</strong>, and <strong>AdaBoost</strong>
+            classifiers trained on solar telemetry data to predict DC power generation classes with precision above
+            <strong>98%</strong>.
+        </p>
+    </div>
+
+    <!-- ========================== -->
+    <!-- Comparison Leaderboard     -->
+    <!-- ========================== -->
+    <section class="m3-section">
+        <div class="section-header-flex">
+            <h2>📊 Model Performance Leaderboard</h2>
+            <span class="table-meta-badge">Head-to-Head Comparison</span>
+        </div>
+
+        <div class="m3-comparison-table-wrapper card">
+            <table class="m3-comparison-table">
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>Accuracy %</th>
+                        <th>Precision %</th>
+                        <th>Recall %</th>
+                        <th>F1 Score %</th>
+                        <th>Verdict</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for model in comparison %}
+                    <tr class="comparison-row {% if loop.first %}best-model{% endif %}">
+                        <td class="model-name-cell">
+                            <span class="model-icon-sm">{{ models_data[loop.index0].icon }}</span>
+                            <span>{{ model.name }}</span>
+                        </td>
+                        <td>
+                            <div class="metric-bar-cell">
+                                <span class="metric-val">{{ model.accuracy }}%</span>
+                                <div class="metric-bar">
+                                    <div class="metric-fill acc" style="width: {{ model.accuracy }}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="metric-bar-cell">
+                                <span class="metric-val">{{ model.precision }}%</span>
+                                <div class="metric-bar">
+                                    <div class="metric-fill prec" style="width: {{ model.precision }}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="metric-bar-cell">
+                                <span class="metric-val">{{ model.recall }}%</span>
+                                <div class="metric-bar">
+                                    <div class="metric-fill rec" style="width: {{ model.recall }}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="metric-bar-cell">
+                                <span class="metric-val">{{ model.f1 }}%</span>
+                                <div class="metric-bar">
+                                    <div class="metric-fill f1" style="width: {{ model.f1 }}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if loop.first %}
+                            <span class="verdict-badge best">🏆 Best</span>
+                            {% elif model.accuracy|float > 98.5 %}
+                            <span class="verdict-badge strong">Strong</span>
+                            {% else %}
+                            <span class="verdict-badge good">Good</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- Interactive Live M3 Ensemble Classifier Simulator -->
+    <!-- ============================================== -->
+    <section class="m3-section">
+        <div class="section-header-flex">
+            <h2>⚡ Live M3 Ensemble Classification Simulator</h2>
+            <span class="table-meta-badge">Interactive Consensus Engine</span>
+        </div>
+
+        <div class="card m3-simulator-card">
+            <p class="m3-sim-desc">
+                Simulate telemetry inputs and observe in real-time how <strong>Decision Tree</strong>, <strong>Random
+                    Forest</strong>, and <strong>AdaBoost</strong> classify solar operational states (Active Generation
+                vs. Dormant/Off-Peak).
+            </p>
+
+            <!-- Scenario Quick Presets -->
+            <!-- Scenario Quick Presets -->
+            <div class="m3-sim-presets">
+                <span class="preset-label">Test Scenarios:</span>
+                <button type="button" class="preset-chip active" onclick="applyM3Preset(32, 56, 0.90, 13)">☀️ High-Noon Peak</button>
+                <button type="button" class="preset-chip" onclick="applyM3Preset(25, 32, 0.25, 9)">⛅ Overcast Morning</button>
+                <button type="button" class="preset-chip" onclick="applyM3Preset(40, 68, 0.85, 14)">🔥 Hot Derating</button>
+                <button type="button" class="preset-chip" onclick="applyM3Preset(38, 30, 0.45, 12)">❄️ Inversion (Cool Mod)</button>
+                <button type="button" class="preset-chip" onclick="applyM3Preset(22, 23, 0.04, 6)">🌅 Dawn Twilight</button>
+                <button type="button" class="preset-chip" onclick="applyM3Preset(19, 19, 0.00, 23)">🌙 Midnight Dormant</button>
+            </div>
+
+            <div class="m3-sim-layout">
+                <!-- Inputs Column -->
+                <div class="m3-sim-inputs">
+                    <div class="m3-input-group">
+                        <div class="m3-input-label-row">
+                            <label for="simAmbient">Ambient Temperature (°C)</label>
+                            <span class="m3-val-badge" id="simAmbientVal">32.0°C</span>
+                        </div>
+                        <input type="range" id="simAmbient" min="15" max="45" step="0.5" value="32"
+                            oninput="updateM3Sim()">
+                        <div id="simAmbientTag" style="font-size: 0.74rem; color: var(--text-muted); margin-top: 4px;">☀️ Warm ambient regime</div>
+                    </div>
+
+                    <div class="m3-input-group">
+                        <div class="m3-input-label-row">
+                            <label for="simModule">Module Temperature (°C)</label>
+                            <span class="m3-val-badge" id="simModuleVal">56.0°C</span>
+                        </div>
+                        <input type="range" id="simModule" min="15" max="75" step="0.5" value="56"
+                            oninput="updateM3Sim()">
+                        <div id="simModuleTag" style="font-size: 0.74rem; color: var(--text-muted); margin-top: 4px;">⚡ Active photovoltaic harvest</div>
+                    </div>
+
+                    <div class="m3-input-group" style="padding: 8px 12px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border: 1px dashed var(--border-subtle);">
+                        <div class="m3-input-label-row">
+                            <span style="font-size: 0.80rem; color: var(--text-muted); font-weight: 600;">Thermal Gradient (ΔT = Module − Ambient):</span>
+                            <span class="m3-val-badge" id="simDeltaVal" style="color: var(--accent-amber-light); background: rgba(245, 158, 11, 0.15);">+24.0°C</span>
+                        </div>
+                        <div id="simDeltaTag" style="font-size: 0.73rem; color: var(--text-muted); margin-top: 3px;">Strong photovoltaic heat generation</div>
+                    </div>
+
+                    <div class="m3-input-group">
+                        <div class="m3-input-label-row">
+                            <label for="simIrrad">Solar Irradiation (kW/m²)</label>
+                            <span class="m3-val-badge" id="simIrradVal">0.90 kW/m²</span>
+                        </div>
+                        <input type="range" id="simIrrad" min="0" max="1.30" step="0.01" value="0.90"
+                            oninput="updateM3Sim()">
+                        <div id="simIrradTag" style="font-size: 0.74rem; color: var(--text-muted); margin-top: 4px;">☀️ High-flux direct irradiance</div>
+                    </div>
+
+                    <div class="m3-input-group">
+                        <div class="m3-input-label-row">
+                            <label for="simHour">Hour of the Day (0–23)</label>
+                            <span class="m3-val-badge" id="simHourVal">13:00</span>
+                        </div>
+                        <input type="range" id="simHour" min="0" max="23" step="1" value="13" oninput="updateM3Sim()">
+                        <div id="simHourTag" style="font-size: 0.74rem; color: var(--text-muted); margin-top: 4px;">☀️ Solar zenith peak</div>
+                    </div>
+                </div>
+
+                <!-- Simulation Output Panel -->
+                <div class="m3-sim-results">
+                    <!-- Master Consensus Badge -->
+                    <div class="m3-consensus-box" id="m3ConsensusBox">
+                        <div class="consensus-icon" id="m3ConsensusIcon">☀️</div>
+                        <div class="consensus-text">
+                            <span class="consensus-sub">ENSEMBLE VOTING CONSENSUS</span>
+                            <h3 class="consensus-title" id="m3ConsensusTitle">Active Solar Generation</h3>
+                            <span class="consensus-confidence" id="m3ConsensusConf">Confidence: 99.8% (3 / 3 Models
+                                Agree)</span>
+                        </div>
+                    </div>
+
+                    <!-- Individual Model Prediction Votes -->
+                    <div class="m3-vote-cards">
+                        <div class="m3-vote-card" id="voteDT">
+                            <div class="vote-header">
+                                <span class="vote-icon">🌳</span>
+                                <span class="vote-name">Decision Tree</span>
+                            </div>
+                            <span class="vote-decision active" id="voteDTStatus">GENERATION</span>
+                            <div class="vote-bar-wrap">
+                                <div class="vote-bar-fill" id="voteDTBar" style="width: 100%"></div>
+                            </div>
+                            <span class="vote-meta" id="voteDTMeta">Split on Irrad > 0.05</span>
+                        </div>
+
+                        <div class="m3-vote-card" id="voteRF">
+                            <div class="vote-header">
+                                <span class="vote-icon">🌲</span>
+                                <span class="vote-name">Random Forest</span>
+                            </div>
+                            <span class="vote-decision active" id="voteRFStatus">GENERATION</span>
+                            <div class="vote-bar-wrap">
+                                <div class="vote-bar-fill" id="voteRFBar" style="width: 100%"></div>
+                            </div>
+                            <span class="vote-meta" id="voteRFMeta">100 / 100 Trees Voted</span>
+                        </div>
+
+                        <div class="m3-vote-card" id="voteAB">
+                            <div class="vote-header">
+                                <span class="vote-icon">⚡</span>
+                                <span class="vote-name">AdaBoost</span>
+                            </div>
+                            <span class="vote-decision active" id="voteABStatus">GENERATION</span>
+                            <div class="vote-bar-wrap">
+                                <div class="vote-bar-fill" id="voteABBar" style="width: 100%"></div>
+                            </div>
+                            <span class="vote-meta" id="voteABMeta">Weighted Margin +0.98</span>
+                        </div>
+                    </div>
+
+                    <div class="m3-sim-explanation" id="m3SimExplanation">
+                        💡 <strong>Physical State Interpretation:</strong> Intense solar irradiation (0.92 kW/m²)
+                        combined with elevated module temperature (+24°C above ambient) triggers maximum power points
+                        across all three ensemble classifiers.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================== -->
+    <!-- Individual Model Deep Dives -->
+    <!-- ========================== -->
+    {% for model in models_data %}
+    <section class="m3-model-section" id="model-{{ model.id }}">
+        <div class="m3-model-header">
+            <div class="m3-model-title-area">
+                <span class="m3-model-icon">{{ model.icon }}</span>
+                <div>
+                    <h2 class="m3-model-name">{{ model.name }}</h2>
+                    <p class="m3-model-desc">{{ model.description }}</p>
+                </div>
+            </div>
+            <div class="m3-model-badges">
+                <span class="status-badge neutral">Module 3</span>
+                <span class="status-badge clean">{{ model.short }}</span>
+            </div>
+        </div>
+
+        <!-- Metrics Grid -->
+        {% if model.metrics %}
+        <div class="m3-metrics-grid">
+            {% for metric_name, metric_data in model.metrics.items() %}
+            <div class="m3-metric-card m3-color-{{ model.color }}">
+                <span class="m3-metric-label">{{ metric_name }}</span>
+                <span class="m3-metric-value">{{ metric_data.pct }}%</span>
+                <div class="m3-metric-bar-bg">
+                    <div class="m3-metric-bar-fill" style="width: {{ metric_data.pct }}%"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Two Column Layout: Parameters + Features -->
+        <div class="m3-detail-grid">
+            <!-- Parameters Card -->
+            {% if model.params %}
+            <div class="card m3-params-card">
+                <h3>⚙️ Hyperparameters</h3>
+                <div class="m3-params-list">
+                    {% for p in model.params %}
+                    <div class="m3-param-row">
+                        <span class="param-key">{{ p.Parameter }}</span>
+                        <span class="param-val">{{ p.Value }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Feature Importance Card -->
+            {% if model.features %}
+            <div class="card m3-features-card">
+                <h3>📊 Top Feature Importances</h3>
+                <div class="m3-features-list">
+                    {% for feat in model.features %}
+                    <div class="m3-feature-row">
+                        <div class="feature-name-line">
+                            <span class="feature-rank">#{{ loop.index }}</span>
+                            <span class="feature-name">{{ feat.feature }}</span>
+                            <span class="feature-pct">{{ feat.pct }}%</span>
+                        </div>
+                        <div class="feature-bar-track">
+                            <div class="feature-bar-fill m3-color-{{ model.color }}" style="width: {{ feat.pct }}%">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Confusion Matrix Visualization -->
+        {% if model.confusion %}
+        <div class="card m3-confusion-card">
+            <h3>🎯 Confusion Matrix Breakdown</h3>
+            <div class="m3-confusion-grid">
+                <div class="cm-cell cm-tn">
+                    <span class="cm-label">True Negative</span>
+                    <span class="cm-value">{{ "{:,}".format(model.confusion.tn) }}</span>
+                    <span class="cm-tag">Correctly Rejected</span>
+                </div>
+                <div class="cm-cell cm-fp">
+                    <span class="cm-label">False Positive</span>
+                    <span class="cm-value">{{ "{:,}".format(model.confusion.fp) }}</span>
+                    <span class="cm-tag">Type I Error</span>
+                </div>
+                <div class="cm-cell cm-fn">
+                    <span class="cm-label">False Negative</span>
+                    <span class="cm-value">{{ "{:,}".format(model.confusion.fn) }}</span>
+                    <span class="cm-tag">Type II Error</span>
+                </div>
+                <div class="cm-cell cm-tp">
+                    <span class="cm-label">True Positive</span>
+                    <span class="cm-value">{{ "{:,}".format(model.confusion.tp) }}</span>
+                    <span class="cm-tag">Correctly Identified</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Visualization Gallery for this model -->
+        {% if model.image_urls %}
+        <div class="m3-viz-gallery">
+            <h3>📸 Model Diagnostic Visualizations</h3>
+            <div class="m3-viz-grid">
+                {% for img_key, img_url in model.image_urls.items() %}
+                <div class="m3-viz-card">
+                    <div class="m3-viz-thumb-wrap m3-lightbox-trigger" data-url="{{ img_url }}"
+                        data-title="{{ model.name }} — {{ img_key | replace('_', ' ') | title }}">
+                        <img src="{{ img_url }}" alt="{{ img_key }}" loading="lazy" class="m3-viz-thumb"
+                            onerror="this.src='/static/placeholder.svg';">
+                        <div class="m3-viz-hover-overlay">
+                            <span>🔍 Zoom &amp; Pan</span>
+                        </div>
+                    </div>
+                    <div class="m3-viz-caption">
+                        <div class="m3-viz-info">
+                            <span class="m3-viz-label">{{ img_key | replace('_', ' ') | title }}</span>
+                            <span class="m3-viz-badge">{{ model.short }}</span>
+                        </div>
+                        <div class="m3-viz-actions">
+                            <a href="{{ img_url }}" target="_blank" rel="noopener" class="m3-direct-link"
+                                title="Open full resolution in a new tab" onclick="event.stopPropagation()">
+                                ↗ Full Res
+                            </a>
+                            <button type="button" class="m3-modal-btn m3-lightbox-trigger" data-url="{{ img_url }}"
+                                data-title="{{ model.name }} — {{ img_key | replace('_', ' ') | title }}">
+                                Preview 🔍
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+    </section>
+    {% endfor %}
+</div>
+
+<!-- Lightbox Modal for M3 Images -->
+<div id="m3LightboxModal" class="lightbox-modal" aria-hidden="true" role="dialog">
+    <div class="lightbox-backdrop" onclick="closeM3Lightbox()"></div>
+    <div class="lightbox-window">
+        <header class="lightbox-header">
+            <div class="lightbox-title-area">
+                <span class="lightbox-badge" id="m3ModalBadge">Module 3</span>
+                <h3 class="lightbox-title" id="m3ModalTitle">Chart Preview</h3>
+            </div>
+            <div class="lightbox-controls">
+                <button type="button" class="lb-ctrl-btn" onclick="m3SetZoom(m3Zoom - 0.25)"
+                    title="Zoom Out (−)">−</button>
+                <button type="button" class="lb-ctrl-btn" id="m3ZoomLabel" onclick="m3ResetView()"
+                    title="Fit to Window">Fit</button>
+                <button type="button" class="lb-ctrl-btn" onclick="m3SetZoom(m3Zoom + 0.25)"
+                    title="Zoom In (+)">+</button>
+                <button type="button" class="lb-ctrl-btn" id="m3NativeResBtn" onclick="toggleM3NativeRes()"
+                    title="View 1:1 Pixel Native Resolution">1:1 Native</button>
+                <a href="#" id="m3OpenTabBtn" class="lb-ctrl-btn open-tab-btn" target="_blank" rel="noopener"
+                    title="Open full-resolution image in new tab">
+                    ↗ Open Full Size
+                </a>
+                <a href="#" id="m3DownloadBtn" class="lb-ctrl-btn download-btn" download
+                    title="Download image to your computer">
+                    📥 Download
+                </a>
+                <button type="button" class="lb-ctrl-btn close-btn" onclick="closeM3Lightbox()"
+                    title="Close (Esc)">✕</button>
+            </div>
+        </header>
+        <div class="lightbox-body">
+            <div class="lightbox-viewport" id="m3Viewport">
+                <div class="lightbox-pan-container" id="m3PanContainer">
+                    <img src="" alt="" id="m3ModalImage" class="lightbox-img">
+                </div>
+            </div>
+        </div>
+        <footer class="lightbox-footer">
+            <span class="lightbox-hint">Drag image to pan · Scroll wheel to zoom · Click "↗ Open Full Size" to view in
+                new tab · Esc to close</span>
+        </footer>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // M3 Interactive Simulator Engine
+    // ==========================================
+    function updateM3Sim() {
+        const ambient = parseFloat(document.getElementById('simAmbient').value);
+        const moduleT = parseFloat(document.getElementById('simModule').value);
+        const irrad = parseFloat(document.getElementById('simIrrad').value);
+        const hour = parseInt(document.getElementById('simHour').value, 10);
+        const tempDelta = moduleT - ambient;
+
+        // 1. Update Badge Values
+        document.getElementById('simAmbientVal').textContent = ambient.toFixed(1) + '°C';
+        document.getElementById('simModuleVal').textContent = moduleT.toFixed(1) + '°C';
+        document.getElementById('simIrradVal').textContent = irrad.toFixed(2) + ' kW/m²';
+        document.getElementById('simHourVal').textContent = (hour < 10 ? '0' : '') + hour + ':00';
+        
+        // 2. Real-time Subtext Indicators for All 4 Controls
+        const ambTag = document.getElementById('simAmbientTag');
+        if (ambTag) {
+            if (ambient < 22) ambTag.textContent = '❄️ Cool ambient regime (<22°C)';
+            else if (ambient < 30) ambTag.textContent = '⛅ Mild ambient temperature';
+            else if (ambient < 38) ambTag.textContent = '☀️ Warm solar conditions';
+            else ambTag.textContent = '🔥 Extreme heatwave (>38°C)';
+        }
+
+        const modTag = document.getElementById('simModuleTag');
+        if (modTag) {
+            if (moduleT < 24) modTag.textContent = '❄️ Cold module (sub-operational)';
+            else if (moduleT < 38) modTag.textContent = '⚡ Low thermal excitation';
+            else if (moduleT < 60) modTag.textContent = '🔥 Active photovoltaic harvest';
+            else modTag.textContent = '⚠️ Elevated heat derating (>60°C)';
+        }
+
+        const irrTag = document.getElementById('simIrradTag');
+        if (irrTag) {
+            if (irrad < 0.05) irrTag.textContent = '🌑 Below inverter cutoff floor (<0.05 kW/m²)';
+            else if (irrad < 0.35) irrTag.textContent = '☁️ Overcast / low solar flux';
+            else if (irrad < 0.80) irrTag.textContent = '⛅ Moderate standard solar flux';
+            else irrTag.textContent = '☀️ High-flux direct irradiance';
+        }
+
+        const hrTag = document.getElementById('simHourTag');
+        if (hrTag) {
+            if (hour < 6 || hour > 19) hrTag.textContent = '🌙 Nocturnal cycle (Offline)';
+            else if (hour <= 8) hrTag.textContent = '🌅 Morning twilight ramp';
+            else if (hour >= 11 && hour <= 14) hrTag.textContent = '☀️ Solar zenith peak hours';
+            else if (hour >= 17) hrTag.textContent = '🌇 Evening dusk decline';
+            else hrTag.textContent = '🌤️ Active daylight window';
+        }
+
+        // 3. Thermal Gradient ΔT Indicator
+        const deltaEl = document.getElementById('simDeltaVal');
+        const deltaTag = document.getElementById('simDeltaTag');
+        if (deltaEl) {
+            deltaEl.textContent = (tempDelta >= 0 ? '+' : '') + tempDelta.toFixed(1) + '°C';
+            if (tempDelta >= 5.0) {
+                deltaEl.style.color = 'var(--accent-emerald-light, #34d399)';
+                deltaEl.style.background = 'rgba(16, 185, 129, 0.15)';
+                if (deltaTag) deltaTag.textContent = 'Strong photovoltaic thermal excitation';
+            } else if (tempDelta >= 1.5) {
+                deltaEl.style.color = 'var(--accent-amber-light, #fbbf24)';
+                deltaEl.style.background = 'rgba(245, 158, 11, 0.15)';
+                if (deltaTag) deltaTag.textContent = 'Marginal thermal rise above ambient';
+            } else {
+                deltaEl.style.color = 'var(--accent-rose-light, #fb7185)';
+                deltaEl.style.background = 'rgba(244, 63, 94, 0.15)';
+                if (deltaTag) deltaTag.textContent = tempDelta < 0 ? '⚠️ Thermal inversion (Module cooler than Ambient)' : '⚠️ Low thermal rise (Under-excited)';
+            }
+        }
+
+        // 4. Physical Factors
+        const isDaytime = (hour >= 6 && hour <= 19);
+        let diurnalFactor = 0;
+        if (isDaytime) {
+            diurnalFactor = Math.sin(Math.PI * (hour - 5.5) / 13.5);
+            diurnalFactor = Math.max(0.08, Math.min(1.0, diurnalFactor));
+        }
+
+        // Thermal derating penalty when module temperature > 60°C
+        let deratingPenalty = 0;
+        if (moduleT > 60) {
+            deratingPenalty = (moduleT - 60) * 0.45;
+        }
+
+        // ============================================================
+        // 1. DECISION TREE: Multi-split hierarchy matching trained tree
+        // Splits sequentially on Diurnal Window -> Irradiance -> Module Temp -> Thermal Delta
+        // ============================================================
+        let dtGen = true;
+        let dtMeta = '';
+        let dtConf = 85;
+
+        if (!isDaytime) {
+            dtGen = false;
+            dtConf = 99;
+            dtMeta = `Night Diurnal Split (${hour}:00 outside 06:00–19:00)`;
+        } else if (irrad < 0.05) {
+            dtGen = false;
+            dtConf = Math.min(99, Math.round(85 + (0.05 - irrad) * 250));
+            dtMeta = `Irrad Cutoff: ${irrad.toFixed(2)} < 0.05 kW/m²`;
+        } else if (tempDelta < 1.5) {
+            dtGen = false;
+            dtConf = Math.min(98, Math.round(82 + (1.5 - tempDelta) * 5));
+            dtMeta = `Thermal Deficit: ΔT (${tempDelta >= 0 ? '+' : ''}${tempDelta.toFixed(1)}°C) < +1.5°C`;
+        } else if (moduleT < 24.0) {
+            dtGen = false;
+            dtConf = Math.min(96, Math.round(80 + (24.0 - moduleT) * 2));
+            dtMeta = `Cold Module: ${moduleT.toFixed(1)}°C < 24.0°C operating floor`;
+        } else {
+            dtGen = true;
+            // DT confidence visibly responds to Irradiance, Module T, Ambient T, and Hour
+            const irradScore = irrad * 32;
+            const deltaScore = Math.max(0, Math.min(18, (tempDelta - 1.5) * 0.9));
+            const hourScore = diurnalFactor * 18;
+            dtConf = Math.max(52, Math.min(99, Math.round(30 + irradScore + deltaScore + hourScore - deratingPenalty)));
+            dtMeta = `Split: Irrad ${irrad.toFixed(2)} · ΔT +${tempDelta.toFixed(1)}° · ${hour}:00`;
+        }
+
+        // ============================================================
+        // 2. RANDOM FOREST: 100 Bagging Trees voting across 3 feature subsets
+        // Sub-forest 1 (35 trees): Thermal dynamics (Ambient, Module Temp & Thermal Delta)
+        // Sub-forest 2 (35 trees): Solar flux & Diurnal hour window
+        // Sub-forest 3 (30 trees): Multivariate interaction energy balance
+        // ============================================================
+        let rfPositiveTrees = 0;
+
+        // Group 1: 35 Thermal dynamics trees
+        // Trees require progressively higher thermal rise (ΔT) and module excitation
+        for (let i = 0; i < 35; i++) {
+            const reqDelta = 1.5 + (i * 0.65);  // thresholds from +1.5°C to +23.6°C
+            const reqMod = 23.0 + (i * 0.85);   // thresholds from 23°C to 52°C
+            const maxAmb = 44.0 - (i * 0.25);   // ambient tolerance
+            if (isDaytime && tempDelta >= reqDelta && moduleT >= reqMod && ambient <= maxAmb && irrad >= 0.04) {
+                rfPositiveTrees++;
+            }
+        }
+
+        // Group 2: 35 Irradiance & Diurnal trees
+        // Trees require adequate solar flux within valid daylight windows
+        for (let i = 0; i < 35; i++) {
+            const reqIrrad = 0.05 + (i * 0.032); // thresholds from 0.05 to 1.14 kW/m²
+            const hrSpread = Math.floor(i / 7);  // 0 to 4 hours restriction around peak
+            const validHour = (hour >= (6 + hrSpread) && hour <= (19 - hrSpread));
+            if (validHour && irrad >= reqIrrad && tempDelta >= 0.5) {
+                rfPositiveTrees++;
+            }
+        }
+
+        // Group 3: 30 Multivariate interaction trees
+        // Composite score factoring all 4 sliders directly
+        const compositeScore = (irrad * 52) 
+            + (tempDelta * 1.8) 
+            + ((moduleT - 25) * 0.4) 
+            - (ambient > 36 ? (ambient - 36) * 1.5 : 0)
+            - (deratingPenalty * 1.2)
+            - (Math.abs(hour - 13) * 3.2);
+
+        for (let i = 0; i < 30; i++) {
+            const reqScore = 3.0 + (i * 2.4); // thresholds from 3 to 72.6
+            if (isDaytime && irrad >= 0.04 && tempDelta >= 0.5 && compositeScore >= reqScore) {
+                rfPositiveTrees++;
+            }
+        }
+
+        const rfGen = rfPositiveTrees >= 50;
+        const rfAgreement = rfGen ? rfPositiveTrees : (100 - rfPositiveTrees);
+
+        // ============================================================
+        // 3. ADABOOST: 4 Sequential Weighted Weak Learners
+        // Stump 1 (Irradiance): Weight α = 0.35
+        // Stump 2 (Thermal Gradient ΔT): Weight α = 0.28
+        // Stump 3 (Diurnal Sun Angle): Weight α = 0.22
+        // Stump 4 (Module Operating Regime): Weight α = 0.15
+        // ============================================================
+        const m1 = Math.tanh((irrad - 0.18) * 6.0);
+        const m2 = Math.tanh((tempDelta - 5.0) * 0.35);
+        const m3 = !isDaytime ? -1.0 : Math.tanh((diurnalFactor - 0.40) * 3.5);
+        const m4 = Math.tanh((moduleT - 30.0) * 0.14) - (moduleT > 62 ? (moduleT - 62) * 0.04 : 0);
+
+        const abScore = (0.35 * m1) + (0.28 * m2) + (0.22 * m3) + (0.15 * m4);
+        const abGen = abScore > 0;
+        const abMargin = Math.max(50, Math.min(99, Math.round(50 + Math.abs(abScore) * 49)));
+
+        // Update individual model UI cards
+        updateVoteUI('voteDT', 'voteDTStatus', 'voteDTBar', 'voteDTMeta', dtGen, dtConf, dtMeta);
+        updateVoteUI('voteRF', 'voteRFStatus', 'voteRFBar', 'voteRFMeta', rfGen, rfAgreement, `${rfPositiveTrees} / 100 Trees Active (ΔT: ${tempDelta >= 0 ? '+' : ''}${tempDelta.toFixed(1)}°C)`);
+        updateVoteUI('voteAB', 'voteABStatus', 'voteABBar', 'voteABMeta', abGen, abMargin, `Weighted Margin: ${(abScore >= 0 ? '+' : '')}${abScore.toFixed(2)} (Irrad+ΔT+Hr+Mod)`);
+
+        // ============================================================
+        // Master Consensus Voting (Majority Rule >= 2 of 3)
+        // ============================================================
+        const votesForGen = (dtGen ? 1 : 0) + (rfGen ? 1 : 0) + (abGen ? 1 : 0);
+        const consensusBox = document.getElementById('m3ConsensusBox');
+        const consensusIcon = document.getElementById('m3ConsensusIcon');
+        const consensusTitle = document.getElementById('m3ConsensusTitle');
+        const consensusConf = document.getElementById('m3ConsensusConf');
+        const expl = document.getElementById('m3SimExplanation');
+
+        const avgConfidence = Math.round((dtConf + rfAgreement + abMargin) / 3);
+
+        if (votesForGen >= 2) {
+            consensusBox.className = 'm3-consensus-box active-gen';
+            consensusIcon.textContent = '☀️';
+            consensusTitle.textContent = 'Active Solar Generation (Class 1)';
+            consensusConf.textContent = `Confidence: ${avgConfidence}% (${votesForGen} of 3 Models Agree)`;
+            
+            let thermalNote = '';
+            if (moduleT > 62) {
+                thermalNote = ` Note: module temperature (${moduleT.toFixed(1)}°C) causes mild thermal semiconductor derating.`;
+            } else if (tempDelta > 15) {
+                thermalNote = ` Strong thermal gradient of +${tempDelta.toFixed(1)}°C confirms intensive radiant heating.`;
+            }
+
+            expl.innerHTML = `💡 <strong>Operational Status:</strong> Solar panels are actively producing power. Solar irradiance of <strong>${irrad.toFixed(2)} kW/m²</strong>, module temperature of <strong>${moduleT.toFixed(1)}°C</strong> with thermal delta <strong>${tempDelta >= 0 ? '+' : ''}${tempDelta.toFixed(1)}°C</strong> over ambient (<strong>${ambient.toFixed(1)}°C</strong>) at <strong>${(hour < 10 ? '0' : '') + hour}:00</strong> satisfy generation thresholds.${thermalNote}`;
+        } else {
+            consensusBox.className = 'm3-consensus-box dormant';
+            consensusIcon.textContent = '🌙';
+            consensusTitle.textContent = 'Dormant / Off-Peak (Class 0)';
+            consensusConf.textContent = `Confidence: ${avgConfidence}% (${3 - votesForGen} of 3 Models Agree)`;
+
+            let reason = '';
+            if (hour < 6 || hour > 19) {
+                reason = `nocturnal night cycle (${(hour < 10 ? '0' : '') + hour}:00 outside 06:00–19:00 daylight)`;
+            } else if (tempDelta < 1.5) {
+                reason = `thermal deficit / inversion (Module: ${moduleT.toFixed(1)}°C vs Ambient: ${ambient.toFixed(1)}°C, ΔT: ${tempDelta >= 0 ? '+' : ''}${tempDelta.toFixed(1)}°C)`;
+            } else if (irrad < 0.05) {
+                reason = `insufficient solar flux (${irrad.toFixed(2)} kW/m² below operational 0.05 kW/m² inverter cutoff)`;
+            } else if (moduleT < 24.0) {
+                reason = `cold module temperature (${moduleT.toFixed(1)}°C below 24.0°C operating floor)`;
+            } else {
+                reason = `sub-threshold combined parameters (Ambient: ${ambient.toFixed(1)}°C, Module: ${moduleT.toFixed(1)}°C, Irrad: ${irrad.toFixed(2)} kW/m², Hour: ${hour}:00)`;
+            }
+            expl.innerHTML = `💡 <strong>Operational Status:</strong> System is in dormant standby due to ${reason}. Inverter telemetry switches to idle mode.`;
+        }
+    }
+
+    function updateVoteUI(cardId, statusId, barId, metaId, isGen, pct, metaText) {
+        const card = document.getElementById(cardId);
+        const status = document.getElementById(statusId);
+        const bar = document.getElementById(barId);
+        const meta = document.getElementById(metaId);
+
+        if (isGen) {
+            card.classList.remove('voted-dormant');
+            card.classList.add('voted-active');
+            status.textContent = 'ACTIVE GENERATION';
+            status.className = 'vote-decision active';
+            bar.className = 'vote-bar-fill active';
+        } else {
+            card.classList.remove('voted-active');
+            card.classList.add('voted-dormant');
+            status.textContent = 'DORMANT / OFF-PEAK';
+            status.className = 'vote-decision dormant';
+            bar.className = 'vote-bar-fill dormant';
+        }
+        bar.style.width = pct + '%';
+        meta.textContent = metaText;
+    }
+
+    function applyM3Preset(amb, mod, irr, hr) {
+        document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+        if (event && event.target) {
+            event.target.classList.add('active');
+        }
+        document.getElementById('simAmbient').value = amb;
+        document.getElementById('simModule').value = mod;
+        document.getElementById('simIrrad').value = irr;
+        document.getElementById('simHour').value = hr;
+        updateM3Sim();
+    }
+
+    // Initialize simulator on load
+    document.addEventListener('DOMContentLoaded', updateM3Sim);
+
+    // ==========================================
+    // M3 Lightbox & Pan-Zoom Implementation
+    // ==========================================
+    let m3Zoom = 1;
+    let m3PanX = 0;
+    let m3PanY = 0;
+    let m3IsDragging = false;
+    let m3StartX = 0;
+    let m3StartY = 0;
+    let m3IsNativeRes = false;
+
+    const m3Modal = document.getElementById('m3LightboxModal');
+    const m3Image = document.getElementById('m3ModalImage');
+    const m3PanContainer = document.getElementById('m3PanContainer');
+    const m3Title = document.getElementById('m3ModalTitle');
+    const m3OpenTabBtn = document.getElementById('m3OpenTabBtn');
+    const m3Download = document.getElementById('m3DownloadBtn');
+    const m3ZoomLabel = document.getElementById('m3ZoomLabel');
+    const m3NativeResBtn = document.getElementById('m3NativeResBtn');
+    const m3Viewport = document.getElementById('m3Viewport');
+
+    function m3ApplyTransform() {
+        m3PanContainer.style.transform = `translate(${m3PanX}px, ${m3PanY}px) scale(${m3Zoom})`;
+        if (m3ZoomLabel) {
+            m3ZoomLabel.textContent = `${Math.round(m3Zoom * 100)}%`;
+        }
+    }
+
+    function m3ResetView() {
+        m3Zoom = 1;
+        m3PanX = 0;
+        m3PanY = 0;
+        m3IsNativeRes = false;
+        m3Image.classList.remove('native-pixels');
+        if (m3NativeResBtn) m3NativeResBtn.classList.remove('active');
+        m3ApplyTransform();
+    }
+
+    function openM3Lightbox(url, title) {
+        m3Image.src = url;
+        m3Image.alt = title;
+        m3Title.textContent = title;
+        m3OpenTabBtn.href = url;
+        m3Download.href = url;
+        m3ResetView();
+        m3Modal.classList.add('open');
+        m3Modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeM3Lightbox() {
+        m3Modal.classList.remove('open');
+        m3Modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        m3Image.src = '';
+    }
+
+    function m3SetZoom(level) {
+        m3Zoom = Math.max(0.3, Math.min(6, level));
+        m3ApplyTransform();
+    }
+
+    function toggleM3NativeRes() {
+        m3IsNativeRes = !m3IsNativeRes;
+        if (m3IsNativeRes) {
+            m3Image.classList.add('native-pixels');
+            if (m3NativeResBtn) m3NativeResBtn.classList.add('active');
+            m3Zoom = 1;
+            m3PanX = 0;
+            m3PanY = 0;
+            m3ApplyTransform();
+        } else {
+            m3ResetView();
+        }
+    }
+
+    // Mouse Drag-to-Pan on M3 lightbox
+    if (m3Viewport) {
+        m3Viewport.addEventListener('mousedown', function (e) {
+            if (e.button !== 0) return;
+            m3IsDragging = true;
+            m3StartX = e.clientX - m3PanX;
+            m3StartY = e.clientY - m3PanY;
+            m3Viewport.style.cursor = 'grabbing';
+            e.preventDefault();
+        });
+
+        window.addEventListener('mousemove', function (e) {
+            if (!m3IsDragging) return;
+            m3PanX = e.clientX - m3StartX;
+            m3PanY = e.clientY - m3StartY;
+            m3ApplyTransform();
+        });
+
+        window.addEventListener('mouseup', function () {
+            if (m3IsDragging) {
+                m3IsDragging = false;
+                m3Viewport.style.cursor = 'grab';
+            }
+        });
+
+        m3Viewport.addEventListener('wheel', function (e) {
+            if (!m3Modal.classList.contains('open')) return;
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.15 : 0.15;
+            m3SetZoom(m3Zoom + delta);
+        }, { passive: false });
+    }
+
+    document.addEventListener('keydown', function (e) {
+        if (!m3Modal.classList.contains('open')) return;
+        if (e.key === 'Escape') closeM3Lightbox();
+        else if (e.key === '+' || e.key === '=') m3SetZoom(m3Zoom + 0.25);
+        else if (e.key === '-') m3SetZoom(m3Zoom - 0.25);
+        else if (e.key === '0') m3ResetView();
+    });
+</script>
+
+{% endblock %}

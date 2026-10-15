@@ -1,0 +1,670 @@
+{% extends "base.html" %}
+
+{% block title %}Telemetry Visualizations — Solar Sense{% endblock %}
+
+{% block content %}
+
+<div class="page viz-page">
+    <!-- Header Hero Banner -->
+    <div class="viz-hero-header">
+        <div class="hero-badge">✦ COMPREHENSIVE INDUSTRIAL VISUAL ANALYTICS</div>
+        <h1 class="viz-main-title">Telemetry Visualizations & ML Diagnostics</h1>
+        <p class="viz-subtitle">
+            Comprehensive telemetry inspection gallery with <strong>{{ total_images_count }} analytical visualizations</strong> spanning univariate distributions, Pearson correlation heatmaps, tree ensembles, decision boundaries, and unsupervised K-Means clusters.
+        </p>
+
+        <!-- Metrics Ribbon -->
+        <div class="viz-stats-ribbon">
+            <div class="ribbon-card">
+                <span class="ribbon-val">{{ total_images_count }}</span>
+                <span class="ribbon-lbl">Total Charts</span>
+            </div>
+            <div class="ribbon-card">
+                <span class="ribbon-val">{{ visualization_sections | length }}</span>
+                <span class="ribbon-lbl">Pipelines & Modules</span>
+            </div>
+            <div class="ribbon-card">
+                <span class="ribbon-val">100%</span>
+                <span class="ribbon-lbl">Sensor Ingestion Coverage</span>
+            </div>
+            <div class="ribbon-card">
+                <span class="ribbon-val">15-Min</span>
+                <span class="ribbon-lbl">SCADA Resolution</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter & Search Control Center -->
+    <div class="viz-control-bar card">
+        <div class="viz-search-wrapper">
+            <span class="search-icon">🔍</span>
+            <input 
+                type="text" 
+                id="vizSearchInput" 
+                placeholder="Search {{ total_images_count }} charts by feature (e.g. ambient temp, confusion matrix, tree, silhouette, heatmap)..." 
+                autocomplete="off"
+            >
+            <button id="clearSearchBtn" class="clear-search-btn" title="Clear Search" style="display: none;">✕</button>
+        </div>
+
+        <div class="viz-actions-right">
+            <span class="view-label">Layout:</span>
+            <div class="view-toggle-group">
+                <button type="button" class="view-btn active" data-view="grid" title="Standard Grid View">⊞ Standard</button>
+                <button type="button" class="view-btn" data-view="showcase" title="Large Showcase View">🗖 Large</button>
+                <button type="button" class="view-btn" data-view="compact" title="Compact View">▦ Compact</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Filter Tabs -->
+    <div class="viz-category-tabs">
+        <button class="cat-pill active" data-filter="all">
+            <span class="pill-icon">🌟</span>
+            <span class="pill-title">All Visualizations</span>
+            <span class="pill-count">{{ total_images_count }}</span>
+        </button>
+        {% for section in visualization_sections %}
+        <button class="cat-pill" data-filter="{{ section.id }}">
+            <span class="pill-icon">{{ section.icon }}</span>
+            <span class="pill-title">{{ section.title }}</span>
+            <span class="pill-count">{{ section.count }}</span>
+        </button>
+        {% endfor %}
+    </div>
+
+    <!-- Search feedback badge -->
+    <div id="searchResultFeedback" class="search-feedback" style="display: none;">
+        <span>Showing <strong id="visibleCount">{{ total_images_count }}</strong> of {{ total_images_count }} charts</span>
+        <button id="resetFiltersBtn" class="btn-link">Reset all filters</button>
+    </div>
+
+    <!-- Visualization Sections Grid -->
+    <div class="viz-sections-container" id="vizSectionsContainer">
+        {% for section in visualization_sections %}
+        <section class="viz-section" id="section-{{ section.id }}" data-category-id="{{ section.id }}">
+            <div class="viz-section-header clickable-topic-bar" tabindex="0" role="button" title="Click this topic bar to filter and focus on {{ section.title }} charts" data-topic-id="{{ section.id }}">
+                <div class="section-title-wrap">
+                    <span class="section-icon">{{ section.icon }}</span>
+                    <div>
+                        <div class="section-title-row">
+                            <h2 class="section-title">{{ section.title }}</h2>
+                            <span class="topic-click-hint">⚡ Click topic bar to filter</span>
+                        </div>
+                        <p class="section-desc">{{ section.description }}</p>
+                    </div>
+                </div>
+                <div class="section-meta">
+                    <span class="status-badge neutral">{{ section.badge }}</span>
+                    <span class="section-count-badge">{{ section.count }} Charts</span>
+                    <button type="button" class="topic-filter-toggle-btn" data-topic-id="{{ section.id }}" title="Toggle filter for this topic">
+                        Filter Topic ↗
+                    </button>
+                </div>
+            </div>
+
+            <div class="viz-image-grid" data-category="{{ section.id }}">
+                {% for image in section.images %}
+                <div 
+                    class="viz-card" 
+                    data-caption="{{ image.caption | lower }}" 
+                    data-filename="{{ image.filename | lower }}"
+                    data-category="{{ section.id }}"
+                    data-category-title="{{ section.title }}"
+                    data-full-url="{{ image.url }}"
+                    data-title="{{ image.caption }}"
+                    data-relpath="{{ image.rel_path }}"
+                    data-description="{{ image.description | lower }}"
+                    data-keywords="{{ image.keywords | lower }}"
+                >
+                    <div class="viz-thumb-wrap">
+                        <img 
+                            src="{{ image.url }}" 
+                            alt="{{ image.caption }}" 
+                            loading="lazy" 
+                            class="viz-thumb"
+                            onerror="this.src='/static/placeholder.svg'; this.alt='Visualization unavailable';"
+                        >
+                        <div class="viz-overlay">
+                            <span class="viz-overlay-zoom">🔍 View High-Res</span>
+                        </div>
+                        <span class="viz-badge-floating">{{ section.badge }}</span>
+                    </div>
+
+                    <div class="viz-card-info">
+                        <h3 class="viz-card-title" title="{{ image.caption }}">{{ image.caption }}</h3>
+                        {% if image.description %}
+                        <p class="viz-card-desc" style="font-size: 0.76rem; color: var(--text-muted, #94a3b8); margin: 3px 0 8px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" title="{{ image.description }}">{{ image.description }}</p>
+                        {% endif %}
+                        <div class="viz-card-meta">
+                            <span class="viz-file-tag">{{ image.filename }}</span>
+                            <div class="viz-card-actions">
+                                <a href="{{ image.url }}" target="_blank" rel="noopener" class="viz-direct-link" title="Open full-resolution image directly in a new browser tab" onclick="event.stopPropagation()">
+                                    ↗ Full Res
+                                </a>
+                                <button type="button" class="viz-quick-btn" title="Inspect in Lightbox">Zoom 🔍</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endfor %}
+    </div>
+
+    <!-- No results placeholder -->
+    <div id="noResultsBox" class="no-results-state card" style="display: none;">
+        <span class="no-results-icon">🔍</span>
+        <h3>No matching visualizations found</h3>
+        <p class="muted">Try adjusting your search keywords or switch to "All Visualizations".</p>
+        <button type="button" class="btn" onclick="resetAllVisualizationsSearch()">Show All Visualizations</button>
+    </div>
+</div>
+
+<!-- Interactive High-Resolution Lightbox Modal -->
+<div id="vizLightboxModal" class="lightbox-modal" aria-hidden="true" role="dialog">
+    <div class="lightbox-backdrop" id="lightboxBackdrop"></div>
+    <div class="lightbox-window">
+        <!-- Lightbox Header -->
+        <header class="lightbox-header">
+            <div class="lightbox-title-area">
+                <span class="lightbox-badge" id="modalBadge">Analysis</span>
+                <h3 class="lightbox-title" id="modalTitle">Chart Preview</h3>
+                <span class="lightbox-relpath" id="modalRelPath">outputs/...</span>
+            </div>
+
+            <div class="lightbox-controls">
+                <button type="button" class="lb-ctrl-btn" id="modalZoomOut" title="Zoom Out (−)">−</button>
+                <button type="button" class="lb-ctrl-btn" id="modalZoomReset" title="Fit to Window (100%)">Fit</button>
+                <button type="button" class="lb-ctrl-btn" id="modalZoomIn" title="Zoom In (+)">+</button>
+                <button type="button" class="lb-ctrl-btn" id="modalNativeResBtn" title="View 1:1 Pixel Native Resolution">1:1 Native</button>
+                <a href="#" id="modalOpenTabBtn" class="lb-ctrl-btn open-tab-btn" target="_blank" rel="noopener" title="Open raw full-resolution image in new tab">
+                    ↗ Open Full Size
+                </a>
+                <a href="#" id="modalDownloadBtn" class="lb-ctrl-btn download-btn" download title="Download full-resolution image to computer">
+                    📥 Download
+                </a>
+                <button type="button" class="lb-ctrl-btn close-btn" id="modalCloseBtn" title="Close (Esc)">✕</button>
+            </div>
+        </header>
+
+        <!-- Lightbox Body -->
+        <div class="lightbox-body" id="lightboxBody">
+            <button type="button" class="lb-nav-btn prev-btn" id="modalPrevBtn" title="Previous Chart (Left Arrow)">‹</button>
+            <div class="lightbox-viewport" id="lightboxViewport">
+                <div class="lightbox-pan-container" id="lightboxPanContainer">
+                    <img src="" alt="" id="modalImage" class="lightbox-img">
+                </div>
+            </div>
+            <button type="button" class="lb-nav-btn next-btn" id="modalNextBtn" title="Next Chart (Right Arrow)">›</button>
+        </div>
+
+        <!-- Lightbox Footer -->
+        <footer class="lightbox-footer">
+            <span class="lightbox-counter" id="modalCounter">Image 1 of 110</span>
+            <span class="lightbox-hint">Drag image to pan · Scroll wheel to zoom · Click "↗ Open Full Size" to view raw resolution in a new tab · Esc to close</span>
+        </footer>
+    </div>
+</div>
+
+<!-- Dynamic Search & Lightbox Controller Script -->
+<script>
+function initVizSearch() {
+    const searchInput = document.getElementById('vizSearchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const catPills = document.querySelectorAll('.cat-pill');
+    const viewBtns = document.querySelectorAll('.view-btn');
+    const cards = Array.from(document.querySelectorAll('.viz-card'));
+    const sections = Array.from(document.querySelectorAll('.viz-section'));
+    const noResultsBox = document.getElementById('noResultsBox');
+    const feedbackBox = document.getElementById('searchResultFeedback');
+    const visibleCountEl = document.getElementById('visibleCount');
+    const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+    const container = document.getElementById('vizSectionsContainer');
+
+    let currentFilter = 'all';
+    let searchQuery = '';
+
+    // Smart Tokenized & Fuzzy Filter Logic
+    function applyFilters() {
+        let visibleCount = 0;
+        const rawQ = (searchQuery || '').toLowerCase().trim();
+
+        // Tokenize search terms and normalize
+        let terms = [];
+        if (rawQ) {
+            terms = rawQ.split(/\s+/).filter(Boolean).map(term => {
+                let t = term.replace(/[^a-z0-9_-]/g, '');
+                // Handle spelling variations for dendrogram / dendogram
+                if (t.includes('dendog') || t.includes('dendrog')) {
+                    return 'dend';
+                }
+                // Strip trailing plural 's' or 'es' or 'ies'
+                if (t.endsWith('ies')) t = t.slice(0, -3) + 'y';
+                else if (t.endsWith('es') && t.length > 4) t = t.slice(0, -2);
+                else if (t.endsWith('s') && t.length > 3) t = t.slice(0, -1);
+                return t;
+            }).filter(Boolean);
+        }
+
+        sections.forEach(section => {
+            const sectionCat = section.getAttribute('data-category-id');
+            const sectionCards = Array.from(section.querySelectorAll('.viz-card'));
+            let sectionVisibleCount = 0;
+
+            const categoryMatches = (currentFilter === 'all' || currentFilter === sectionCat);
+
+            sectionCards.forEach(card => {
+                const caption = (card.getAttribute('data-caption') || '').toLowerCase();
+                const filename = (card.getAttribute('data-filename') || '').toLowerCase();
+                const title = (card.getAttribute('data-title') || '').toLowerCase();
+                const keywords = (card.getAttribute('data-keywords') || '').toLowerCase();
+                const description = (card.getAttribute('data-description') || '').toLowerCase();
+                const categoryTitle = (card.getAttribute('data-category-title') || '').toLowerCase();
+
+                const fullHaystack = `${caption} ${title} ${filename} ${keywords} ${description} ${categoryTitle}`;
+
+                let queryMatches = true;
+                if (terms.length > 0) {
+                    // Every search token must match somewhere in the card's metadata
+                    queryMatches = terms.every(term => fullHaystack.includes(term));
+                }
+
+                if (categoryMatches && queryMatches) {
+                    card.style.display = '';
+                    sectionVisibleCount++;
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            if (sectionVisibleCount > 0) {
+                section.style.display = '';
+            } else {
+                section.style.display = 'none';
+            }
+        });
+
+        // Visible count & feedback
+        if (visibleCountEl) visibleCountEl.textContent = visibleCount;
+        if (feedbackBox) {
+            feedbackBox.style.display = (rawQ || currentFilter !== 'all') ? 'flex' : 'none';
+        }
+        if (noResultsBox) {
+            noResultsBox.style.display = (visibleCount === 0) ? 'block' : 'none';
+        }
+        if (clearSearchBtn) {
+            clearSearchBtn.style.display = rawQ ? 'block' : 'none';
+        }
+    }
+
+    // Category filter state management
+    function setCategoryFilter(filterId, scrollTarget = false) {
+        currentFilter = filterId || 'all';
+
+        // Update pills active state
+        catPills.forEach(p => {
+            const pillFilter = p.getAttribute('data-filter');
+            p.classList.toggle('active', pillFilter === currentFilter);
+        });
+
+        // Update topic bars (section headers) active indicator
+        sections.forEach(s => {
+            const sCat = s.getAttribute('data-category-id');
+            const isMatch = (currentFilter === 'all' || sCat === currentFilter);
+            const header = s.querySelector('.clickable-topic-bar');
+            if (header) {
+                header.classList.toggle('active-topic', sCat === currentFilter && currentFilter !== 'all');
+                const btn = header.querySelector('.topic-filter-toggle-btn');
+                if (btn) {
+                    btn.textContent = (sCat === currentFilter && currentFilter !== 'all') ? 'Showing All ✕' : 'Filter Topic ↗';
+                    btn.classList.toggle('active-filter-btn', sCat === currentFilter && currentFilter !== 'all');
+                }
+            }
+        });
+
+        applyFilters();
+
+        // Sync URL hash for bookmarking and navigation state
+        if (currentFilter !== 'all') {
+            if (history.replaceState) {
+                history.replaceState(null, '', '#' + currentFilter);
+            }
+            if (scrollTarget) {
+                const targetSec = document.getElementById('section-' + currentFilter);
+                if (targetSec) {
+                    targetSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        } else {
+            if (history.replaceState) {
+                history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
+        }
+    }
+
+    // Category button clicks (top filter pills)
+    catPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            const filterId = pill.getAttribute('data-filter') || 'all';
+            setCategoryFilter(filterId, false);
+        });
+    });
+
+    // Topic bar click handlers (interactive section headers)
+    const topicBars = document.querySelectorAll('.clickable-topic-bar');
+    topicBars.forEach(bar => {
+        const topicId = bar.getAttribute('data-topic-id');
+
+        bar.addEventListener('click', (e) => {
+            // Prevent duplicate handling if inner button clicked
+            if (e.target.closest('.topic-filter-toggle-btn')) return;
+            
+            // If already filtered to this topic, toggle back to 'all'; otherwise filter to this topic
+            if (currentFilter === topicId) {
+                setCategoryFilter('all', false);
+            } else {
+                setCategoryFilter(topicId, true);
+            }
+        });
+
+        bar.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                if (currentFilter === topicId) {
+                    setCategoryFilter('all', false);
+                } else {
+                    setCategoryFilter(topicId, true);
+                }
+            }
+        });
+    });
+
+    // Topic toggle buttons inside section headers
+    const topicToggleBtns = document.querySelectorAll('.topic-filter-toggle-btn');
+    topicToggleBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const topicId = btn.getAttribute('data-topic-id');
+            if (currentFilter === topicId) {
+                setCategoryFilter('all', false);
+            } else {
+                setCategoryFilter(topicId, true);
+            }
+        });
+    });
+
+    // Search input with cross-category auto-expansion
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            // If user types while a specific category was locked, search all categories
+            if (searchQuery.trim().length > 0 && currentFilter !== 'all') {
+                currentFilter = 'all';
+                catPills.forEach(p => p.classList.toggle('active', p.getAttribute('data-filter') === 'all'));
+            }
+            applyFilters();
+        });
+
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                searchInput.value = '';
+                searchQuery = '';
+                applyFilters();
+            }
+        });
+    }
+
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            searchQuery = '';
+            applyFilters();
+            searchInput.focus();
+        });
+    }
+
+    if (resetFiltersBtn) {
+        resetFiltersBtn.addEventListener('click', () => {
+            resetAllVisualizationsSearch();
+        });
+    }
+
+    window.resetAllVisualizationsSearch = function() {
+        if (searchInput) searchInput.value = '';
+        searchQuery = '';
+        setCategoryFilter('all', false);
+    };
+
+    // Check URL hash on initial load (e.g. #clustering or #trees)
+    const initialHash = (window.location.hash || '').replace('#', '');
+    if (initialHash) {
+        const matchingPill = document.querySelector(`.cat-pill[data-filter="${initialHash}"]`);
+        if (matchingPill) {
+            setCategoryFilter(initialHash, true);
+        } else {
+            applyFilters();
+        }
+    } else {
+        applyFilters();
+    }
+
+    // Hashchange listener for browser back/forward buttons
+    window.addEventListener('hashchange', () => {
+        const hash = (window.location.hash || '').replace('#', '') || 'all';
+        setCategoryFilter(hash, false);
+    });
+
+    // View toggle (grid, showcase, compact)
+    viewBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            viewBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const view = btn.getAttribute('data-view');
+            container.className = 'viz-sections-container view-' + view;
+        });
+    });
+
+    // ==========================================
+    // Interactive Lightbox Modal Implementation
+    // ==========================================
+    const modal = document.getElementById('vizLightboxModal');
+    const backdrop = document.getElementById('lightboxBackdrop');
+    const modalImage = document.getElementById('modalImage');
+    const panContainer = document.getElementById('lightboxPanContainer');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBadge = document.getElementById('modalBadge');
+    const modalRelPath = document.getElementById('modalRelPath');
+    const modalOpenTabBtn = document.getElementById('modalOpenTabBtn');
+    const modalDownloadBtn = document.getElementById('modalDownloadBtn');
+    const modalCounter = document.getElementById('modalCounter');
+    const closeBtn = document.getElementById('modalCloseBtn');
+    const prevBtn = document.getElementById('modalPrevBtn');
+    const nextBtn = document.getElementById('modalNextBtn');
+    const zoomInBtn = document.getElementById('modalZoomIn');
+    const zoomOutBtn = document.getElementById('modalZoomOut');
+    const zoomResetBtn = document.getElementById('modalZoomReset');
+    const nativeResBtn = document.getElementById('modalNativeResBtn');
+    const lightboxViewport = document.getElementById('lightboxViewport');
+
+    let currentCardIndex = 0;
+    let zoomLevel = 1;
+    let panX = 0;
+    let panY = 0;
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let isNativeRes = false;
+
+    function getCurrentlyVisibleCards() {
+        return cards.filter(card => card.style.display !== 'none');
+    }
+
+    function applyTransform() {
+        panContainer.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
+        if (zoomResetBtn) {
+            zoomResetBtn.textContent = `${Math.round(zoomLevel * 100)}%`;
+        }
+    }
+
+    function resetView() {
+        zoomLevel = 1;
+        panX = 0;
+        panY = 0;
+        isNativeRes = false;
+        modalImage.classList.remove('native-pixels');
+        if (nativeResBtn) nativeResBtn.classList.remove('active');
+        applyTransform();
+    }
+
+    function openModalForCard(card) {
+        const visibleCards = getCurrentlyVisibleCards();
+        currentCardIndex = visibleCards.indexOf(card);
+        if (currentCardIndex === -1) currentCardIndex = 0;
+        updateModalContent();
+        modal.classList.add('open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function updateModalContent() {
+        const visibleCards = getCurrentlyVisibleCards();
+        if (!visibleCards.length) return;
+
+        const card = visibleCards[currentCardIndex];
+        const url = card.getAttribute('data-full-url');
+        const title = card.getAttribute('data-title');
+        const category = card.getAttribute('data-category-title');
+        const relpath = card.getAttribute('data-relpath');
+
+        modalImage.src = url;
+        modalImage.alt = title;
+        modalTitle.textContent = title;
+        modalBadge.textContent = category;
+        modalRelPath.textContent = relpath;
+        modalOpenTabBtn.href = url;
+        modalDownloadBtn.href = url;
+        modalCounter.textContent = `Chart ${currentCardIndex + 1} of ${visibleCards.length}`;
+
+        resetView();
+    }
+
+    function closeModal() {
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        modalImage.src = '';
+    }
+
+    function showPrev() {
+        const visibleCards = getCurrentlyVisibleCards();
+        if (!visibleCards.length) return;
+        currentCardIndex = (currentCardIndex - 1 + visibleCards.length) % visibleCards.length;
+        updateModalContent();
+    }
+
+    function showNext() {
+        const visibleCards = getCurrentlyVisibleCards();
+        if (!visibleCards.length) return;
+        currentCardIndex = (currentCardIndex + 1) % visibleCards.length;
+        updateModalContent();
+    }
+
+    function setZoom(level) {
+        zoomLevel = Math.max(0.3, Math.min(6, level));
+        applyTransform();
+    }
+
+    // Toggle 1:1 Native Resolution
+    if (nativeResBtn) {
+        nativeResBtn.addEventListener('click', () => {
+            isNativeRes = !isNativeRes;
+            if (isNativeRes) {
+                modalImage.classList.add('native-pixels');
+                nativeResBtn.classList.add('active');
+                zoomLevel = 1;
+                panX = 0;
+                panY = 0;
+                applyTransform();
+            } else {
+                modalImage.classList.remove('native-pixels');
+                nativeResBtn.classList.remove('active');
+                resetView();
+            }
+        });
+    }
+
+    // Card click events (clicking thumbnail or view button)
+    cards.forEach(card => {
+        card.addEventListener('click', (e) => {
+            // Ignore if clicked directly on an <a> tag
+            if (e.target.closest('a')) return;
+            openModalForCard(card);
+        });
+    });
+
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (backdrop) backdrop.addEventListener('click', closeModal);
+    if (prevBtn) prevBtn.addEventListener('click', (e) => { e.stopPropagation(); showPrev(); });
+    if (nextBtn) nextBtn.addEventListener('click', (e) => { e.stopPropagation(); showNext(); });
+
+    if (zoomInBtn) zoomInBtn.addEventListener('click', () => setZoom(zoomLevel + 0.25));
+    if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => setZoom(zoomLevel - 0.25));
+    if (zoomResetBtn) zoomResetBtn.addEventListener('click', resetView);
+
+    // Mouse Drag-to-Pan Implementation
+    lightboxViewport.addEventListener('mousedown', function(e) {
+        if (e.button !== 0) return; // Only left mouse button
+        isDragging = true;
+        startX = e.clientX - panX;
+        startY = e.clientY - panY;
+        lightboxViewport.style.cursor = 'grabbing';
+        e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        panX = e.clientX - startX;
+        panY = e.clientY - startY;
+        applyTransform();
+    });
+
+    window.addEventListener('mouseup', function() {
+        if (isDragging) {
+            isDragging = false;
+            lightboxViewport.style.cursor = 'grab';
+        }
+    });
+
+    // Scroll-to-zoom on lightbox viewport
+    if (lightboxViewport) {
+        lightboxViewport.addEventListener('wheel', function(e) {
+            if (!modal.classList.contains('open')) return;
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.15 : 0.15;
+            setZoom(zoomLevel + delta);
+        }, { passive: false });
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (!modal.classList.contains('open')) return;
+        if (e.key === 'Escape') closeModal();
+        else if (e.key === 'ArrowLeft') showPrev();
+        else if (e.key === 'ArrowRight') showNext();
+        else if (e.key === '+' || e.key === '=') setZoom(zoomLevel + 0.25);
+        else if (e.key === '-') setZoom(zoomLevel - 0.25);
+        else if (e.key === '0') resetView();
+    });
+} // end initVizSearch
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initVizSearch);
+} else {
+    initVizSearch();
+}
+</script>
+
+{% endblock %}

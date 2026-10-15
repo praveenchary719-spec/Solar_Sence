@@ -1,0 +1,10 @@
+Parameter,Value
+Original Rows,68774
+Original Columns,11
+Working Rows,68774
+Working Columns,11
+Target Column,DC_POWER
+Number of Classes,4
+Number of Features,10
+Duplicate Rows Removed,0
+CV Folds,5

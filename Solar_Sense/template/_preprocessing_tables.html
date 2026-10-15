@@ -1,0 +1,100 @@
+{# Preprocessing Tables and Figures Macros — Solar Sense Design System #}
+
+{% macro saved_table(item, expanded=false) %}
+<details class="card report-result" data-url="{{ item.data_url }}" data-page="1" {% if expanded %}open{% endif %} style="padding: 18px; margin: 14px 0; border: 1px solid var(--border-subtle); background: rgba(15, 23, 42, 0.7);">
+    <summary style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; list-style: none;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.1rem;">📁</span>
+            <div>
+                <strong style="color: var(--text-primary); font-size: 0.95rem;">{{ item.title }}</strong>
+                <span style="font-size: 0.78rem; color: var(--text-muted); margin-left: 8px;">
+                    ({{ "{:,}".format(item.rows) }} rows · {{ item.columns }} columns)
+                </span>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="status-badge clean" style="font-size: 0.7rem;">0 Missing Cells</span>
+            <span class="toggle-indicator" style="font-size: 0.8rem; color: var(--text-muted);">▾</span>
+        </div>
+    </summary>
+
+    <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-subtle);">
+        <p style="margin: 0 0 10px; font-size: 0.84rem; color: var(--text-secondary); line-height: 1.5;">
+            {{ item.description }}
+        </p>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+            <div style="display: flex; gap: 16px; font-size: 0.8rem; color: var(--text-muted);">
+                <span><strong>Rows:</strong> {{ "{:,}".format(item.rows) }}</span>
+                <span><strong>Columns:</strong> {{ item.columns }}</span>
+                <span><strong>Missing:</strong> 0</span>
+                <span><strong>Duplicates:</strong> 0</span>
+            </div>
+            <a href="{{ item.download_url }}" class="btn" style="padding: 6px 14px; font-size: 0.78rem; text-decoration: none;">
+                ⬇️ Download Complete CSV
+            </a>
+        </div>
+
+        <div style="overflow-x: auto; max-height: 420px; overflow-y: auto; border-radius: 8px; border: 1px solid var(--border-subtle);">
+            <table class="m3-comparison-table" style="width: 100%; font-size: 0.78rem; margin: 0;">
+                <thead style="position: sticky; top: 0; background: #070b14; z-index: 2;">
+                    <tr>
+                        {% for header in item.table.headers %}
+                        <th>{{ header }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in item.table.rows %}
+                    <tr>
+                        {% for val in row %}
+                        {% if loop.first %}
+                        <th scope="row" style="color: #38bdf8; font-weight: 600;">{{ val }}</th>
+                        {% else %}
+                        <td>{{ val }}</td>
+                        {% endif %}
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-pagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding: 6px 2px;">
+            <button type="button" data-step="-1" class="btn secondary" disabled style="padding: 4px 12px; font-size: 0.74rem;">
+                ← Previous 50
+            </button>
+            <span class="page-status" style="font-size: 0.78rem; color: var(--text-muted); font-family: var(--font-mono);">
+                Page 1 · Rows {{ item.table.start }}–{{ item.table.end }}
+            </span>
+            <button type="button" data-step="1" class="btn secondary" {% if not item.table.has_next %}disabled{% endif %} style="padding: 4px 12px; font-size: 0.74rem;">
+                Next 50 →
+            </button>
+        </div>
+        <p class="table-error" role="alert" style="color: var(--accent-rose); font-size: 0.75rem; margin: 4px 0 0;"></p>
+    </div>
+</details>
+{% endmacro %}
+
+{% macro plot(url, title, description='') %}
+<figure class="preprocessing-plot card" style="padding: 16px; margin: 16px 0; background: rgba(11, 17, 32, 0.75);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h4 style="margin: 0; font-size: 0.95rem; color: var(--text-primary); font-family: var(--font-heading);">
+            {{ title }}
+        </h4>
+        <a href="{{ url }}" target="_blank" rel="noopener" class="status-badge" style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; text-decoration: none; font-size: 0.72rem;">
+            Full Size ↗
+        </a>
+    </div>
+    <div style="border-radius: 10px; overflow: hidden; background: #070b14; border: 1px solid var(--border-subtle); text-align: center;">
+        <a href="{{ url }}" target="_blank" rel="noopener">
+            <img src="{{ url }}" alt="{{ title }}" loading="lazy" style="max-width: 100%; height: auto; display: block; margin: 0 auto;">
+        </a>
+    </div>
+    {% if description %}
+    <figcaption style="margin-top: 8px; font-size: 0.78rem; color: var(--text-muted);">
+        {{ description }}
+    </figcaption>
+    {% endif %}
+</figure>
+{% endmacro %}

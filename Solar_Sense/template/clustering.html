@@ -1,0 +1,618 @@
+{% extends "base.html" %}
+
+{% block title %}K-Means Clustering &amp; Unsupervised Analysis (M4) — Solar Sense{% endblock %}
+
+{% block content %}
+
+<div class="page m4-page">
+    <!-- Hero Header -->
+    <div class="m4-hero-header">
+        <div class="hero-badge">🔮 MODULE 4 — UNSUPERVISED CLUSTERING ANALYSIS</div>
+        <h1 class="m4-main-title">K-Means Clustering &amp; Silhouette Optimization</h1>
+        <p class="m4-subtitle">
+            Discover natural operational states in solar telemetry data using <strong>K-Means</strong> and <strong>K-Means++</strong> clustering, optimized via the <strong>Elbow Method</strong> and <strong>Silhouette Coefficient</strong> to identify <strong>3 distinct generation regimes</strong>.
+        </p>
+    </div>
+
+    <!-- ================================ -->
+    <!-- Cluster Overview Metrics Banner  -->
+    <!-- ================================ -->
+    <section class="m4-section">
+        <div class="section-header-flex">
+            <h2>🎯 Clustering Overview</h2>
+            <span class="table-meta-badge">Unsupervised Learning</span>
+        </div>
+
+        <div class="m4-overview-cards">
+            {% for variant in m4_data.variants %}
+            <div class="card m4-overview-card m4-color-{{ variant.color }}">
+                <div class="m4-overview-header">
+                    <span class="m4-variant-icon">{{ variant.icon }}</span>
+                    <div>
+                        <h3 class="m4-variant-name">{{ variant.name }}</h3>
+                        <p class="m4-variant-desc">{{ variant.description }}</p>
+                    </div>
+                </div>
+
+                {% if variant.metrics %}
+                <div class="m4-metrics-strip">
+                    <div class="m4-metric-pill">
+                        <span class="m4-pill-label">Clusters</span>
+                        <span class="m4-pill-value">{{ variant.metrics.n_clusters }}</span>
+                    </div>
+                    <div class="m4-metric-pill">
+                        <span class="m4-pill-label">Silhouette</span>
+                        <span class="m4-pill-value">{{ variant.metrics.silhouette }}</span>
+                    </div>
+                    <div class="m4-metric-pill">
+                        <span class="m4-pill-label">Inertia</span>
+                        <span class="m4-pill-value">{{ "{:,.0f}".format(variant.metrics.inertia) }}</span>
+                    </div>
+                    <div class="m4-metric-pill">
+                        <span class="m4-pill-label">Calinski-Harabasz</span>
+                        <span class="m4-pill-value">{{ "{:,.0f}".format(variant.metrics.calinski) }}</span>
+                    </div>
+                    <div class="m4-metric-pill">
+                        <span class="m4-pill-label">Davies-Bouldin</span>
+                        <span class="m4-pill-value">{{ variant.metrics.davies_bouldin }}</span>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if m4_data.accuracy %}
+                <div class="m4-accuracy-strip">
+                    {% if variant.id == 'kmeans' and 'K-Means' in m4_data.accuracy %}
+                    {% set acc_pct = m4_data.accuracy['K-Means'].pct %}
+                    <div class="m4-accuracy-bar-wrap">
+                        <span class="m4-acc-label">Cluster Matching Accuracy</span>
+                        <div class="m4-acc-bar-track">
+                            <div class="m4-acc-bar-fill" style="width: {{ acc_pct }}%;"></div>
+                        </div>
+                        <span class="m4-acc-value">{{ acc_pct }}%</span>
+                    </div>
+                    {% elif variant.id == 'kmeans_pp' and 'K-Means++' in m4_data.accuracy %}
+                    {% set acc_pct = m4_data.accuracy['K-Means++'].pct %}
+                    <div class="m4-accuracy-bar-wrap">
+                        <span class="m4-acc-label">Cluster Matching Accuracy</span>
+                        <div class="m4-acc-bar-track">
+                            <div class="m4-acc-bar-fill" style="width: {{ acc_pct }}%;"></div>
+                        </div>
+                        <span class="m4-acc-value">{{ acc_pct }}%</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- ================================ -->
+    <!-- Metric Score Explanation Cards   -->
+    <!-- ================================ -->
+    <section class="m4-section">
+        <div class="section-header-flex">
+            <h2>📐 Understanding Cluster Quality Metrics</h2>
+            <span class="table-meta-badge">Metric Interpretation</span>
+        </div>
+
+        <div class="m4-explainer-grid">
+            <div class="card m4-explainer-card">
+                <div class="m4-explainer-icon">📏</div>
+                <h4>Silhouette Score</h4>
+                <p>Measures how similar a point is to its own cluster vs. neighboring clusters. Range: [-1, 1]. Higher is better. A score of <strong>0.58</strong> indicates well-separated, cohesive clusters.</p>
+                <div class="m4-score-gauge">
+                    <div class="gauge-fill silhouette" style="width: 79%"></div>
+                    <span class="gauge-label">0.584 / 1.0</span>
+                </div>
+            </div>
+            <div class="card m4-explainer-card">
+                <div class="m4-explainer-icon">📐</div>
+                <h4>Calinski-Harabasz Index</h4>
+                <p>Ratio of between-cluster dispersion to within-cluster dispersion. Higher values indicate denser, more separated clusters. Score of <strong>116,290</strong> shows excellent separation.</p>
+                <div class="m4-score-gauge">
+                    <div class="gauge-fill calinski" style="width: 92%"></div>
+                    <span class="gauge-label">116,290 — Excellent</span>
+                </div>
+            </div>
+            <div class="card m4-explainer-card">
+                <div class="m4-explainer-icon">🎯</div>
+                <h4>Davies-Bouldin Index</h4>
+                <p>Average similarity between clusters. Lower is better (0 = perfect). A score of <strong>0.62</strong> confirms minimal cluster overlap and distinct operational regimes.</p>
+                <div class="m4-score-gauge">
+                    <div class="gauge-fill davies" style="width: 38%"></div>
+                    <span class="gauge-label">0.6196 — Low Overlap</span>
+                </div>
+            </div>
+            <div class="card m4-explainer-card">
+                <div class="m4-explainer-icon">🔻</div>
+                <h4>Inertia (WCSS)</h4>
+                <p>Within-Cluster Sum of Squares — total distance of points from their cluster centroid. The Elbow method identifies the optimal k where inertia reduction rate flattens.</p>
+                <div class="m4-score-gauge">
+                    <div class="gauge-fill inertia" style="width: 60%"></div>
+                    <span class="gauge-label">62,779 — Elbow at k=3</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================================ -->
+    <!-- Elbow & Silhouette Charts       -->
+    <!-- ================================ -->
+    <!-- ================================ -->
+    <!-- Interactive Operational Regime Detector -->
+    <!-- ================================ -->
+    <section class="m4-section">
+        <div class="section-header-flex">
+            <h2>🔮 Live Operational Regime Detector &amp; Profiler</h2>
+            <span class="table-meta-badge">Centroid Distance Classifier</span>
+        </div>
+
+        <div class="card m4-detector-card">
+            <p class="m4-sim-desc">
+                Input live environmental telemetry to calculate normalized Euclidean distances to the <strong>3 K-Means Centroids</strong> and dynamically map current operations to its operational regime.
+            </p>
+
+            <div class="m4-detector-presets">
+                <span class="preset-label">Operating Scenarios:</span>
+                <button type="button" class="preset-chip active" onclick="applyM4Preset(33, 59, 0.95)">☀️ Midday Full Sun</button>
+                <button type="button" class="preset-chip" onclick="applyM4Preset(28, 38, 0.38)">⛅ Moderate Cloudiness</button>
+                <button type="button" class="preset-chip" onclick="applyM4Preset(23, 25, 0.08)">🌅 Early Morning / Dusk</button>
+                <button type="button" class="preset-chip" onclick="applyM4Preset(19, 19, 0.00)">🌙 Nighttime Standby</button>
+            </div>
+
+            <div class="m4-detector-layout">
+                <!-- Sliders -->
+                <div class="m4-detector-inputs">
+                    <div class="m3-input-group">
+                        <div class="m3-input-label-row">
+                            <label for="m4Amb">Ambient Temperature (°C)</label>
+                            <span class="m3-val-badge" id="m4AmbVal">33.0°C</span>
+                        </div>
+                        <input type="range" id="m4Amb" min="15" max="45" step="0.5" value="33" oninput="updateM4Detector()">
+                    </div>
+
+                    <div class="m3-input-group">
+                        <div class="m3-input-label-row">
+                            <label for="m4Mod">Module Temperature (°C)</label>
+                            <span class="m3-val-badge" id="m4ModVal">59.0°C</span>
+                        </div>
+                        <input type="range" id="m4Mod" min="15" max="75" step="0.5" value="59" oninput="updateM4Detector()">
+                    </div>
+
+                    <div class="m3-input-group">
+                        <div class="m3-input-label-row">
+                            <label for="m4Irr">Solar Irradiation (kW/m²)</label>
+                            <span class="m3-val-badge" id="m4IrrVal">0.95 kW/m²</span>
+                        </div>
+                        <input type="range" id="m4Irr" min="0" max="1.30" step="0.01" value="0.95" oninput="updateM4Detector()">
+                    </div>
+                </div>
+
+                <!-- Detector Visual Result -->
+                <div class="m4-detector-results">
+                    <div class="m4-active-cluster-card" id="m4ActiveClusterCard">
+                        <div class="cluster-badge-top">DETECTED REGIME</div>
+                        <h3 class="active-cluster-name" id="m4ClusterTitle">Cluster 2 — Peak Solar Generation</h3>
+                        <p class="active-cluster-desc" id="m4ClusterDesc">Optimal energy harvesting state. Panels operating near maximum power capacity.</p>
+                        
+                        <div class="cluster-membership-bars">
+                            <div class="cm-bar-row">
+                                <span class="cm-name">Cluster 0 (Night/Low)</span>
+                                <div class="cm-track"><div class="cm-fill c0" id="m4Bar0" style="width: 2%"></div></div>
+                                <span class="cm-pct" id="m4Pct0">2%</span>
+                            </div>
+                            <div class="cm-bar-row">
+                                <span class="cm-name">Cluster 1 (Transitional)</span>
+                                <div class="cm-track"><div class="cm-fill c1" id="m4Bar1" style="width: 14%"></div></div>
+                                <span class="cm-pct" id="m4Pct1">14%</span>
+                            </div>
+                            <div class="cm-bar-row">
+                                <span class="cm-name">Cluster 2 (Peak Sun)</span>
+                                <div class="cm-track"><div class="cm-fill c2" id="m4Bar2" style="width: 84%"></div></div>
+                                <span class="cm-pct" id="m4Pct2">84%</span>
+                            </div>
+                        </div>
+
+                        <div class="m4-cluster-action-advice" id="m4AdviceBox">
+                            ⚡ <strong>Engineering Guidance:</strong> Inverters operating in continuous grid injection. Monitor thermal derating if module exceeds 65°C.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================================ -->
+    <!-- Optimization Heuristics          -->
+    <!-- ================================ -->
+    <section class="m4-section">
+        <div class="section-header-flex">
+            <h2>📈 Optimization Heuristics</h2>
+            <span class="table-meta-badge">Elbow + Silhouette</span>
+        </div>
+
+        <div class="m4-heuristic-grid">
+            {% if m4_data.elbow_images %}
+            <div class="m4-chart-pair card">
+                <h3 class="m4-chart-group-title">Elbow Method — Optimal k Selection</h3>
+                <p class="m4-chart-desc">The elbow heuristic plots inertia (WCSS) against k. The optimal number of clusters is where the curve shows a pronounced "elbow" — diminishing returns in variance reduction.</p>
+                <div class="m4-chart-row">
+                    {% for key, url in m4_data.elbow_images.items() %}
+                    <div class="m4-chart-card">
+                        <div class="m4-chart-thumb-wrap m4-lightbox-trigger" data-url="{{ url }}" data-title="Elbow Method — {{ key | replace('_', ' ') | title }}">
+                            <img src="{{ url }}" alt="Elbow {{ key }}" loading="lazy" class="m4-chart-img"
+                                onerror="this.src='/static/placeholder.svg';">
+                            <div class="m4-chart-overlay"><span>🔍 Zoom &amp; Pan</span></div>
+                        </div>
+                        <div class="m4-chart-footer">
+                            <span class="m4-chart-label">{{ key | replace('_', ' ') | title }}</span>
+                            <a href="{{ url }}" target="_blank" rel="noopener" class="m4-direct-link" title="Open full resolution in new tab" onclick="event.stopPropagation()">
+                                ↗ Full Res
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if m4_data.silhouette_images %}
+            <div class="m4-chart-pair card">
+                <h3 class="m4-chart-group-title">Silhouette Analysis — Cluster Cohesion Validation</h3>
+                <p class="m4-chart-desc">Silhouette analysis validates each cluster's tightness and separation. Taller, uniform silhouette profiles indicate well-defined clusters without misassignment.</p>
+                <div class="m4-chart-row">
+                    {% for key, url in m4_data.silhouette_images.items() %}
+                    <div class="m4-chart-card">
+                        <div class="m4-chart-thumb-wrap m4-lightbox-trigger" data-url="{{ url }}" data-title="Silhouette — {{ key | replace('_', ' ') | title }}">
+                            <img src="{{ url }}" alt="Silhouette {{ key }}" loading="lazy" class="m4-chart-img"
+                                onerror="this.src='/static/placeholder.svg';">
+                            <div class="m4-chart-overlay"><span>🔍 Zoom &amp; Pan</span></div>
+                        </div>
+                        <div class="m4-chart-footer">
+                            <span class="m4-chart-label">{{ key | replace('_', ' ') | title }}</span>
+                            <a href="{{ url }}" target="_blank" rel="noopener" class="m4-direct-link" title="Open full resolution in new tab" onclick="event.stopPropagation()">
+                                ↗ Full Res
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- ================================ -->
+    <!-- 3D + PCA Cluster Visualizations -->
+    <!-- ================================ -->
+    <section class="m4-section">
+        <div class="section-header-flex">
+            <h2>🌐 Cluster Visualizations</h2>
+            <span class="table-meta-badge">3D &amp; PCA Projections</span>
+        </div>
+
+        {% for variant in m4_data.variants %}
+        {% if variant.image_urls %}
+        <div class="m4-cluster-viz-section">
+            <div class="m4-cluster-viz-header">
+                <span class="m4-variant-icon-lg">{{ variant.icon }}</span>
+                <div>
+                    <h3>{{ variant.name }} — Cluster Projections</h3>
+                    <p class="muted">Visual representation of the {{ variant.metrics.n_clusters if variant.metrics else '3' }} discovered operational clusters in 3D space and PCA-reduced 2D space.</p>
+                </div>
+            </div>
+            <div class="m4-cluster-viz-grid">
+                {% for key, url in variant.image_urls.items() %}
+                <div class="m4-cluster-viz-card">
+                    <div class="m4-cluster-img-wrap m4-lightbox-trigger" data-url="{{ url }}" data-title="{{ variant.name }} — {{ key | replace('_', ' ') | title }}">
+                        <img src="{{ url }}" alt="{{ key }}" loading="lazy" class="m4-cluster-img"
+                            onerror="this.src='/static/placeholder.svg';">
+                        <div class="m4-cluster-hover">
+                            <span>🔍 Zoom &amp; Pan</span>
+                        </div>
+                    </div>
+                    <div class="m4-cluster-info">
+                        <div>
+                            <span class="m4-cluster-label">{{ key | replace('_', ' ') | title }}</span>
+                            <span class="m4-cluster-tag">{{ variant.name }}</span>
+                        </div>
+                        <div class="m4-cluster-actions">
+                            <a href="{{ url }}" target="_blank" rel="noopener" class="m4-direct-link" title="Open full resolution in new tab" onclick="event.stopPropagation()">
+                                ↗ Full Res
+                            </a>
+                            <button type="button" class="m4-modal-btn m4-lightbox-trigger" data-url="{{ url }}" data-title="{{ variant.name }} — {{ key | replace('_', ' ') | title }}">
+                                Preview 🔍
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </section>
+
+    <!-- ================================ -->
+    <!-- Cluster Interpretation Guide    -->
+    <!-- ================================ -->
+    <section class="m4-section">
+        <div class="section-header-flex">
+            <h2>💡 Cluster Interpretation Guide</h2>
+            <span class="table-meta-badge">Domain Analysis</span>
+        </div>
+
+        <div class="m4-interpretation-grid">
+            <div class="card m4-cluster-meaning">
+                <div class="m4-cluster-dot nighttime"></div>
+                <h4>Cluster 0 — Nighttime / Dormant Standby</h4>
+                <p>Zero or near-zero DC power output with low irradiation and ambient module temperatures. Represents nighttime hours and heavy overcast conditions where solar panels are dormant.</p>
+                <div class="m4-cluster-tags">
+                    <span class="column-pill">DC_POWER ≈ 0</span>
+                    <span class="column-pill">Irradiation &lt; 0.05</span>
+                    <span class="column-pill">Night / Low Light</span>
+                </div>
+            </div>
+            <div class="card m4-cluster-meaning">
+                <div class="m4-cluster-dot partial"></div>
+                <h4>Cluster 1 — Transitional / Variable Clouds</h4>
+                <p>Moderate DC power output during sunrise/sunset transitions or partially clouded periods. Module temperatures are warm but not at peak, irradiation is moderate.</p>
+                <div class="m4-cluster-tags">
+                    <span class="column-pill">DC_POWER 0.15–0.55</span>
+                    <span class="column-pill">Dawn / Dusk</span>
+                    <span class="column-pill">Partially Overcast</span>
+                </div>
+            </div>
+            <div class="card m4-cluster-meaning">
+                <div class="m4-cluster-dot peak"></div>
+                <h4>Cluster 2 — Peak Solar Generation</h4>
+                <p>Maximum DC power output during clear-sky midday conditions with high irradiation and elevated module temperatures. This is the optimal operational state for energy harvesting.</p>
+                <div class="m4-cluster-tags">
+                    <span class="column-pill">DC_POWER > 0.55</span>
+                    <span class="column-pill">Clear Sky</span>
+                    <span class="column-pill">Peak Radiance</span>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Lightbox Modal for M4 Images -->
+<div id="m4LightboxModal" class="lightbox-modal" aria-hidden="true" role="dialog">
+    <div class="lightbox-backdrop" onclick="closeM4Lightbox()"></div>
+    <div class="lightbox-window">
+        <header class="lightbox-header">
+            <div class="lightbox-title-area">
+                <span class="lightbox-badge" id="m4ModalBadge">Module 4</span>
+                <h3 class="lightbox-title" id="m4ModalTitle">Chart Preview</h3>
+            </div>
+            <div class="lightbox-controls">
+                <button type="button" class="lb-ctrl-btn" onclick="m4SetZoom(m4Zoom - 0.25)" title="Zoom Out (−)">−</button>
+                <button type="button" class="lb-ctrl-btn" id="m4ZoomLabel" onclick="m4ResetView()" title="Fit to Window">Fit</button>
+                <button type="button" class="lb-ctrl-btn" onclick="m4SetZoom(m4Zoom + 0.25)" title="Zoom In (+)">+</button>
+                <button type="button" class="lb-ctrl-btn" id="m4NativeResBtn" onclick="toggleM4NativeRes()" title="View 1:1 Pixel Native Resolution">1:1 Native</button>
+                <a href="#" id="m4OpenTabBtn" class="lb-ctrl-btn open-tab-btn" target="_blank" rel="noopener" title="Open full-resolution image in new tab">
+                    ↗ Open Full Size
+                </a>
+                <a href="#" id="m4DownloadBtn" class="lb-ctrl-btn download-btn" download title="Download image to your computer">
+                    📥 Download
+                </a>
+                <button type="button" class="lb-ctrl-btn close-btn" onclick="closeM4Lightbox()" title="Close (Esc)">✕</button>
+            </div>
+        </header>
+        <div class="lightbox-body">
+            <div class="lightbox-viewport" id="m4Viewport">
+                <div class="lightbox-pan-container" id="m4PanContainer">
+                    <img src="" alt="" id="m4ModalImage" class="lightbox-img">
+                </div>
+            </div>
+        </div>
+        <footer class="lightbox-footer">
+            <span class="lightbox-hint">Drag image to pan · Scroll wheel to zoom · Click "↗ Open Full Size" to view in new tab · Esc to close</span>
+        </footer>
+    </div>
+</div>
+
+<script>
+// Delegated lightbox trigger — reads data-url / data-title to avoid quote mixing in HTML attrs
+document.addEventListener('click', function(e) {
+    const trigger = e.target.closest('.m4-lightbox-trigger');
+    if (trigger) {
+        e.stopPropagation();
+        openM4Lightbox(trigger.dataset.url, trigger.dataset.title);
+    }
+});
+
+// ==========================================
+// M4 Live Operational Regime Detector
+// ==========================================
+// Centroids normalized in [Ambient, Module, Irrad]
+// Cluster 0: Low/Night: [22°C, 22°C, 0.00]
+// Cluster 1: Transitional: [28°C, 36°C, 0.35]
+// Cluster 2: Peak: [34°C, 60°C, 0.95]
+const centroids = [
+    { id: 0, name: "Cluster 0 — Nighttime / Low Generation", amb: 22, mod: 22, irr: 0.00, color: "c0",
+      desc: "Zero or near-zero DC power output with low irradiation. System in dormant or night standby.",
+      advice: "🌙 Standby telemetry mode active. Inverter sleep cycle engaged to minimize parasitic standby power." },
+    { id: 1, name: "Cluster 1 — Transitional / Variable Clouds", amb: 28, mod: 36, irr: 0.35, color: "c1",
+      desc: "Moderate generation during sunrise/sunset or intermittent cloud cover.",
+      advice: "⛅ Dynamic MPPT tracking active. Inverter dynamically adjusting voltage to track variable irradiances." },
+    { id: 2, name: "Cluster 2 — Peak Solar Generation", amb: 34, mod: 60, irr: 0.95, color: "c2",
+      desc: "Maximum power point harvest during high irradiance and clear sky midday.",
+      advice: "⚡ High-capacity grid injection. Monitor thermal coefficient to ensure module cooling exceeds 1.5 m/s airflow." }
+];
+
+function updateM4Detector() {
+    const amb = parseFloat(document.getElementById('m4Amb').value);
+    const mod = parseFloat(document.getElementById('m4Mod').value);
+    const irr = parseFloat(document.getElementById('m4Irr').value);
+
+    document.getElementById('m4AmbVal').textContent = amb.toFixed(1) + '°C';
+    document.getElementById('m4ModVal').textContent = mod.toFixed(1) + '°C';
+    document.getElementById('m4IrrVal').textContent = irr.toFixed(2) + ' kW/m²';
+
+    // Normalized Euclidean distances
+    const d0 = Math.sqrt(Math.pow((amb - 22)/20, 2) + Math.pow((mod - 22)/40, 2) + Math.pow((irr - 0.0)/1.0, 2));
+    const d1 = Math.sqrt(Math.pow((amb - 28)/20, 2) + Math.pow((mod - 36)/40, 2) + Math.pow((irr - 0.35)/1.0, 2));
+    const d2 = Math.sqrt(Math.pow((amb - 34)/20, 2) + Math.pow((mod - 60)/40, 2) + Math.pow((irr - 0.95)/1.0, 2));
+
+    // Softmax-like probability weights
+    const w0 = 1 / (d0 + 0.05);
+    const w1 = 1 / (d1 + 0.05);
+    const w2 = 1 / (d2 + 0.05);
+    const sumW = w0 + w1 + w2;
+
+    const p0 = Math.round((w0 / sumW) * 100);
+    const p1 = Math.round((w1 / sumW) * 100);
+    const p2 = 100 - p0 - p1;
+
+    document.getElementById('m4Bar0').style.width = p0 + '%';
+    document.getElementById('m4Pct0').textContent = p0 + '%';
+    document.getElementById('m4Bar1').style.width = p1 + '%';
+    document.getElementById('m4Pct1').textContent = p1 + '%';
+    document.getElementById('m4Bar2').style.width = p2 + '%';
+    document.getElementById('m4Pct2').textContent = p2 + '%';
+
+    let winner = 0;
+    if (p1 >= p0 && p1 >= p2) winner = 1;
+    else if (p2 >= p0 && p2 >= p1) winner = 2;
+
+    const cInfo = centroids[winner];
+    const card = document.getElementById('m4ActiveClusterCard');
+    card.className = 'm4-active-cluster-card win-' + cInfo.color;
+    document.getElementById('m4ClusterTitle').textContent = cInfo.name;
+    document.getElementById('m4ClusterDesc').textContent = cInfo.desc;
+    document.getElementById('m4AdviceBox').innerHTML = cInfo.advice;
+}
+
+function applyM4Preset(amb, mod, irr) {
+    document.querySelectorAll('.m4-detector-presets .preset-chip').forEach(c => c.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('m4Amb').value = amb;
+    document.getElementById('m4Mod').value = mod;
+    document.getElementById('m4Irr').value = irr;
+    updateM4Detector();
+}
+
+document.addEventListener('DOMContentLoaded', updateM4Detector);
+
+// ==========================================
+// M4 Lightbox & Pan-Zoom Implementation
+// ==========================================
+let m4Zoom = 1;
+let m4PanX = 0;
+let m4PanY = 0;
+let m4IsDragging = false;
+let m4StartX = 0;
+let m4StartY = 0;
+let m4IsNativeRes = false;
+
+const m4Modal = document.getElementById('m4LightboxModal');
+const m4Image = document.getElementById('m4ModalImage');
+const m4PanContainer = document.getElementById('m4PanContainer');
+const m4Title = document.getElementById('m4ModalTitle');
+const m4OpenTabBtn = document.getElementById('m4OpenTabBtn');
+const m4Download = document.getElementById('m4DownloadBtn');
+const m4ZoomLabel = document.getElementById('m4ZoomLabel');
+const m4NativeResBtn = document.getElementById('m4NativeResBtn');
+const m4Viewport = document.getElementById('m4Viewport');
+
+function m4ApplyTransform() {
+    m4PanContainer.style.transform = `translate(${m4PanX}px, ${m4PanY}px) scale(${m4Zoom})`;
+    if (m4ZoomLabel) {
+        m4ZoomLabel.textContent = `${Math.round(m4Zoom * 100)}%`;
+    }
+}
+
+function m4ResetView() {
+    m4Zoom = 1;
+    m4PanX = 0;
+    m4PanY = 0;
+    m4IsNativeRes = false;
+    m4Image.classList.remove('native-pixels');
+    if (m4NativeResBtn) m4NativeResBtn.classList.remove('active');
+    m4ApplyTransform();
+}
+
+function openM4Lightbox(url, title) {
+    m4Image.src = url;
+    m4Image.alt = title;
+    m4Title.textContent = title;
+    m4OpenTabBtn.href = url;
+    m4Download.href = url;
+    m4ResetView();
+    m4Modal.classList.add('open');
+    m4Modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeM4Lightbox() {
+    m4Modal.classList.remove('open');
+    m4Modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    m4Image.src = '';
+}
+
+function m4SetZoom(level) {
+    m4Zoom = Math.max(0.3, Math.min(6, level));
+    m4ApplyTransform();
+}
+
+function toggleM4NativeRes() {
+    m4IsNativeRes = !m4IsNativeRes;
+    if (m4IsNativeRes) {
+        m4Image.classList.add('native-pixels');
+        if (m4NativeResBtn) m4NativeResBtn.classList.add('active');
+        m4Zoom = 1;
+        m4PanX = 0;
+        m4PanY = 0;
+        m4ApplyTransform();
+    } else {
+        m4ResetView();
+    }
+}
+
+// Mouse Drag-to-Pan on M4 lightbox
+if (m4Viewport) {
+    m4Viewport.addEventListener('mousedown', function(e) {
+        if (e.button !== 0) return;
+        m4IsDragging = true;
+        m4StartX = e.clientX - m4PanX;
+        m4StartY = e.clientY - m4PanY;
+        m4Viewport.style.cursor = 'grabbing';
+        e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', function(e) {
+        if (!m4IsDragging) return;
+        m4PanX = e.clientX - m4StartX;
+        m4PanY = e.clientY - m4StartY;
+        m4ApplyTransform();
+    });
+
+    window.addEventListener('mouseup', function() {
+        if (m4IsDragging) {
+            m4IsDragging = false;
+            m4Viewport.style.cursor = 'grab';
+        }
+    });
+
+    m4Viewport.addEventListener('wheel', function(e) {
+        if (!m4Modal.classList.contains('open')) return;
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.15 : 0.15;
+        m4SetZoom(m4Zoom + delta);
+    }, { passive: false });
+}
+
+document.addEventListener('keydown', function(e) {
+    if (!m4Modal.classList.contains('open')) return;
+    if (e.key === 'Escape') closeM4Lightbox();
+    else if (e.key === '+' || e.key === '=') m4SetZoom(m4Zoom + 0.25);
+    else if (e.key === '-') m4SetZoom(m4Zoom - 0.25);
+    else if (e.key === '0') m4ResetView();
+});
+</script>
+
+{% endblock %}

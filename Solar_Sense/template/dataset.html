@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Dataset - Solar Sense{% endblock %}
+
+{% block content %}
+
+<div class="page">
+    <div class="page-header">
+        <h1>Solar Power Dataset</h1>
+        <p class="page-subtitle">Inspect raw ingestion data, schema definitions, data quality metrics, and preprocessed variants.</p>
+    </div>
+
+    <div class="card dataset-management-card">
+        <div class="card-header-flex">
+            <h3>⚡ Dataset Management & Ingestion</h3>
+            <span class="active-badge">Active: {{ raw_dataset.name }}</span>
+        </div>
+        
+        {% if message %}
+        <div class="alert-banner">
+            <span class="alert-icon">✦</span>
+            <div class="alert-text">{{ message }}</div>
+        </div>
+        {% endif %}
+
+        <div class="dataset-control-grid">
+            <form method="POST" enctype="multipart/form-data" class="dataset-box-form">
+                <label for="dataset">Upload New Dataset (CSV)</label>
+                <div class="file-input-wrapper">
+                    <input type="file" name="dataset" id="dataset" accept=".csv" required>
+                </div>
+                <button type="submit" class="btn">Upload & Set Active</button>
+            </form>
+
+            <form method="POST" class="dataset-box-form">
+                <label for="select_dataset">Select Uploaded Dataset</label>
+                <div class="select-wrapper">
+                    <select name="select_dataset" id="select_dataset">
+                        {% for ds in uploaded_datasets %}
+                        <option value="{{ ds.filename }}" {% if ds.is_active %}selected{% endif %}>{{ ds.filename }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-btn-group">
+                    <button type="submit" class="btn">Switch Dataset</button>
+                    <button type="submit" name="reset_dataset" value="1" class="btn secondary">Reset to Default</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="cards stats">
+        <div class="card">
+            <h3>Total Records</h3>
+            <div class="stat-value">{{ raw_dataset.rows }}</div>
+        </div>
+        <div class="card">
+            <h3>Total Features</h3>
+            <div class="stat-value">{{ raw_dataset.columns }}</div>
+        </div>
+        <div class="card">
+            <h3>Missing Values</h3>
+            <div class="stat-value">{{ raw_dataset.missing_total }}</div>
+        </div>
+        <div class="card">
+            <h3>Duplicate Records</h3>
+            <div class="stat-value">{{ raw_dataset.duplicate_total }}</div>
+        </div>
+    </div>
+
+    <div class="section-header-flex">
+        <h2>Dataset Columns</h2>
+        <span class="table-meta-badge">{{ raw_dataset.columns_list | length }} features detected</span>
+    </div>
+    <div class="card columns-card">
+        <div class="badge-list">
+            {% for col in raw_dataset.columns_list %}
+            <span class="column-pill"><span class="pill-dot"></span>{{ col }}</span>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="section-header-flex">
+        <h2>Missing Values by Column</h2>
+        <span class="table-meta-badge">Data Quality Assessment</span>
+    </div>
+    <div class="detail-table small-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Column Name</th>
+                    <th>Missing Count</th>
+                    <th>Data Quality Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in raw_dataset.missing_by_column %}
+                <tr>
+                    <td><strong>{{ item.column }}</strong></td>
+                    <td>{{ item.missing }}</td>
+                    <td>
+                        {% if item.missing == 0 %}
+                        <span class="status-badge clean">✓ Clean (0 missing)</span>
+                        {% else %}
+                        <span class="status-badge alert">⚠ {{ item.missing }} Missing</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section-header-flex">
+        <h2>Sample Ingestion Records</h2>
+        <span class="table-meta-badge">Previewing first {{ sample_rows | length }} rows</span>
+    </div>
+    <div class="detail-table small-table sample-table-scroll">
+        <table>
+            <thead>
+                <tr>
+                    {% for column in raw_dataset.columns_list %}
+                    <th>{{ column }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in sample_rows %}
+                <tr>
+                    {% for column in raw_dataset.columns_list %}
+                    <td>{% if row[column] is float %}{{ "%.3f" | format(row[column]) }}{% else %}{{ row[column] }}{% endif %}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section-header-flex">
+        <h2>Preprocessed Engineering Files</h2>
+        <span class="table-meta-badge">{{ clean_datasets | length }} Pipeline Variants</span>
+    </div>
+    <div class="file-list">
+        {% for item in clean_datasets %}
+        <div class="file-item">
+            <h3>{{ item.title }}</h3>
+            <p class="muted">{{ item.description }}</p>
+            <p>{{ item.name }} · {{ item.rows }} rows · {{ item.columns }} columns</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}
